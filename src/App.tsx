@@ -8,7 +8,6 @@ import WizardSection from './sections/WizardSection'
 import LandingFooter from './sections/LandingFooter'
 import SmoothScroll from './components/SmoothScroll'
 import CustomCursor from './components/CustomCursor'
-import MascotPeeker from './components/MascotPeeker'
 
 export default function App() {
   return (
@@ -26,9 +25,6 @@ export default function App() {
         <LandingFooter />
       </div>
       <CustomCursor />
-
-      <MascotPeeker triggerId="pillars" imageSrc="./images/mascot-pillars.png" side="left" bottomClassName="bottom-[20%]" />
-      <MascotPeeker triggerId="cena" imageSrc="./images/mascot-peeking.png" side="right" bottomClassName="bottom-[15%]" />
     </SmoothScroll>
   )
 }

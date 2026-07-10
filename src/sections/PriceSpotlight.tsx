@@ -12,8 +12,6 @@ const included = [
 
 export default function PriceSpotlight() {
   const ref = useRef<HTMLDivElement>(null)
-  const ctaMascotRef = useRef<HTMLImageElement>(null)
-
   useEffect(() => {
     const el = ref.current
     if (!el) return
@@ -23,30 +21,6 @@ export default function PriceSpotlight() {
     }, el)
     return () => ctx.revert()
   }, [])
-
-  const handleMouseEnter = () => {
-    if (ctaMascotRef.current) {
-      gsap.to(ctaMascotRef.current, {
-        scale: 1.18,
-        y: -10,
-        rotate: 8,
-        duration: 0.35,
-        ease: 'back.out(1.8)'
-      })
-    }
-  }
-
-  const handleMouseLeave = () => {
-    if (ctaMascotRef.current) {
-      gsap.to(ctaMascotRef.current, {
-        scale: 1,
-        y: 0,
-        rotate: 0,
-        duration: 0.25,
-        ease: 'power2.out'
-      })
-    }
-  }
 
   return (
     <section ref={ref} id="cena" className="bg-[#F5F5F5] py-16 lg:py-24">
@@ -76,28 +50,15 @@ export default function PriceSpotlight() {
             ))}
           </div>
 
-          <div className="ps-item relative inline-block mt-4">
-            <img 
-              ref={ctaMascotRef}
-              src="./images/mascot-cta.png" 
-              alt="Mascot Guard" 
-              className="absolute -top-14 -right-10 w-12 h-auto pointer-events-none select-none z-10 origin-bottom"
-              draggable={false}
-            />
-
-            <button
-              onClick={() => scrollToId('zapitvane')}
-              onMouseEnter={handleMouseEnter}
-              onMouseLeave={handleMouseLeave}
-              className="inline-flex items-center gap-2 bg-[#DC2626] text-white px-8 py-4 rounded-full text-sm uppercase tracking-[0.12em] font-medium hover:bg-[#B91C1C] hover:scale-[1.03] transition-all duration-300"
-            >
-              Заяви анализ
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-                <path d="M12 5v14M19 12l-7 7-7-7" strokeLinecap="round" strokeLinejoin="round" />
-              </svg>
-            </button>
-          </div>
-
+          <button
+            onClick={() => scrollToId('zapitvane')}
+            className="ps-item inline-flex items-center gap-2 bg-[#DC2626] text-white px-8 py-4 rounded-full text-sm uppercase tracking-[0.12em] font-medium hover:bg-[#B91C1C] hover:scale-[1.03] transition-all duration-300"
+          >
+            Заяви анализ
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+              <path d="M12 5v14M19 12l-7 7-7-7" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
+          </button>
         </div>
       </div>
     </section>
