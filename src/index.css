@@ -1,0 +1,179 @@
+@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@100;200;300;400;500;600;700&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 0 0% 100%;
+    --foreground: 0 0% 10%;
+    --card: 0 0% 100%;
+    --card-foreground: 0 0% 10%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 0 0% 10%;
+    --primary: 0 72% 51%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 0 0% 96%;
+    --secondary-foreground: 0 0% 10%;
+    --muted: 0 0% 96%;
+    --muted-foreground: 0 0% 40%;
+    --accent: 78 100% 50%;
+    --accent-foreground: 0 0% 10%;
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 0 0% 98%;
+    --border: 0 0% 90%;
+    --input: 0 0% 90%;
+    --ring: 0 72% 51%;
+    --radius: 1rem;
+    --red: #DC2626;
+    --black: #1A1A1A;
+    --white: #FFFFFF;
+    --light-grey: #F5F5F5;
+    --lime: #9BFF00;
+    --purple: #6612D1;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  html {
+    scroll-behavior: smooth;
+  }
+  body {
+    @apply bg-white text-[#1A1A1A] antialiased;
+    font-family: 'Montserrat', sans-serif;
+  }
+}
+
+/* Custom thin scrollbar */
+::-webkit-scrollbar {
+  width: 3px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: #DC2626;
+  border-radius: 10px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #B91C1C;
+}
+
+@layer components {
+  .font-thin-display {
+    font-family: 'Montserrat', sans-serif;
+    font-weight: 200;
+    letter-spacing: -0.02em;
+    line-height: 1.05;
+  }
+  
+  .font-ultra-thin {
+    font-family: 'Montserrat', sans-serif;
+    font-weight: 100;
+    letter-spacing: -0.02em;
+    line-height: 1.0;
+  }
+  
+  .section-padding {
+    @apply px-6 md:px-12 lg:px-16 xl:px-24;
+  }
+  
+  .container-max {
+    @apply max-w-[1400px] mx-auto;
+  }
+  
+  .vertical-nav-link {
+    @apply text-[11px] uppercase tracking-[0.15em] font-light transition-colors duration-300;
+  }
+}
+
+@layer utilities {
+  .text-red-accent {
+    color: var(--red);
+  }
+  .bg-red-accent {
+    background-color: var(--red);
+  }
+  .animate-spin-slow {
+    animation: spin 30s linear infinite;
+  }
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+@keyframes bounce {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-10px); }
+}
+
+.animate-bounce {
+  animation: bounce 1.5s ease-in-out infinite;
+}
+
+/* === Services marquee (ExpandSection) === */
+@keyframes marquee-left {
+  from { transform: translateX(0); }
+  to { transform: translateX(-50%); }
+}
+@keyframes marquee-right {
+  from { transform: translateX(-50%); }
+  to { transform: translateX(0); }
+}
+.marquee-track-left {
+  animation: marquee-left 45s linear infinite;
+}
+.marquee-track-right {
+  animation: marquee-right 60s linear infinite;
+}
+.marquee-group:hover .marquee-track-left,
+.marquee-group:hover .marquee-track-right {
+  animation-play-state: paused;
+}
+.marquee-fade {
+  -webkit-mask-image: linear-gradient(to right, transparent, black 7%, black 93%, transparent);
+  mask-image: linear-gradient(to right, transparent, black 7%, black 93%, transparent);
+}
+.text-outline-red {
+  color: transparent;
+  -webkit-text-stroke: 1.5px #DC2626;
+}
+@media (prefers-reduced-motion: reduce) {
+  .marquee-track-left, .marquee-track-right { animation: none; }
+}
+
+/* === Концентрични пръстени с услуги (almero стил) === */
+@keyframes spin-rev {
+  from { transform: rotate(360deg); }
+  to { transform: rotate(0deg); }
+}
+.ring-a { animation: spin 55s linear infinite; }
+.ring-b { animation: spin-rev 45s linear infinite; }
+.ring-c { animation: spin 38s linear infinite; }
+@media (prefers-reduced-motion: reduce) {
+  .ring-a, .ring-b, .ring-c { animation: none; }
+}
+
+/* === UX одит: достъпност и touch === */
+:focus-visible {
+  outline: 2px solid #DC2626;
+  outline-offset: 3px;
+  border-radius: 2px;
+}
+body {
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* Полетата имат собствен фокус индикатор (червената линия) — без глобалния ring */
+input:focus-visible,
+textarea:focus-visible,
+select:focus-visible {
+  outline: none;
+}
