@@ -3,8 +3,8 @@ import gsap from 'gsap'
 
 // Измерено от реалното лого (дялове от размера на лицето)
 const EYES = [
-  { name: 'left', rest: [0.3161, 0.3845] as const, w: 0.1854, img: './images/pupil-left.png' },
-  { name: 'right', rest: [0.6733, 0.3845] as const, w: 0.1824, img: './images/pupil-right.png' },
+  { name: 'left', rest: [0.3161, 0.3845] as const, w: 0.1854, iw: 61, ih: 52, img: './images/pupil-left.png' },
+  { name: 'right', rest: [0.6733, 0.3845] as const, w: 0.1824, iw: 60, ih: 52, img: './images/pupil-right.png' },
 ]
 const TRAVEL_X = 0.0365 // максимално отклонение на зеницата (дял от ширината)
 const TRAVEL_Y = 0.0213
@@ -82,7 +82,7 @@ export default function LogoFace({ className = '' }: { className?: string }) {
 
   return (
     <div ref={rootRef} className={`relative select-none pointer-events-none ${className}`} aria-hidden="true">
-      <img src="./images/face-base.png" alt="" className="w-full h-auto" draggable={false} />
+      <img src="./images/face-base.png" alt="" width={329} height={329} className="w-full h-auto" draggable={false} />
       {EYES.map(eye => (
         <div
           key={eye.name}
@@ -94,7 +94,7 @@ export default function LogoFace({ className = '' }: { className?: string }) {
             transform: 'translate(-50%, -50%)',
           }}
         >
-          <img src={eye.img} alt="" className="lf-pupil block w-full h-auto" draggable={false} />
+          <img src={eye.img} alt="" width={eye.iw} height={eye.ih} className="lf-pupil block w-full h-auto" draggable={false} />
         </div>
       ))}
     </div>

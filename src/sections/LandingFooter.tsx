@@ -16,24 +16,24 @@ export default function LandingFooter() {
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-10">
             <div className="lg:col-span-5">
               <div className="inline-flex items-center gap-3 mb-6">
-                <img src="./images/logo-mark-white.png" alt="Just Pablo Digital" loading="lazy" decoding="async" className="w-9 h-9 object-contain" />
+                <img src="./images/logo-mark-white.png" alt="Just Pablo Digital" loading="lazy" decoding="async" width={329} height={329} className="w-9 h-9 object-contain" />
                 <span className="flex flex-col leading-none">
                   <span className="text-lg font-semibold text-white">Just Pablo</span>
                   <span className="text-[9px] font-bold uppercase tracking-[0.3em] text-[#DC2626] mt-1">Digital</span>
                 </span>
               </div>
-              <p className="text-sm font-light text-white/60 leading-relaxed max-w-sm">
+              <p className="text-sm font-light text-white/70 leading-relaxed max-w-sm">
                 Дигитална агенция, изградена върху най-голямата инфлуенсър платформа в България. Native подход, данни в реално време, измерими резултати.
               </p>
             </div>
             <div className="lg:col-span-4">
-              <div className="text-[10px] uppercase tracking-[0.18em] font-medium text-white/40 mb-4">Контакти</div>
-              <a href="mailto:info@justpablo.bg" className="block text-sm text-[#DC2626] hover:text-white transition-colors mb-2">info@justpablo.bg</a>
-              <a href="tel:0887654321" className="block text-sm font-light text-white/70 hover:text-white transition-colors mb-2">0887 654 321</a>
-              <div className="text-sm font-light text-white/45">Варна, ул. Мария Луиза 47</div>
+              <div className="text-[10px] uppercase tracking-[0.18em] font-medium text-white/55 mb-4">Контакти</div>
+              <a href="mailto:info@justpablo.bg" className="block text-sm text-[#DC2626] hover:text-white transition-colors mb-2 py-1">info@justpablo.bg</a>
+              <a href="tel:0887654321" className="block text-sm font-light text-white/75 hover:text-white transition-colors mb-2 py-1">0887 654 321</a>
+              <div className="text-sm font-light text-white/60">Варна, ул. Мария Луиза 47</div>
             </div>
             <div className="lg:col-span-3">
-              <div className="text-[10px] uppercase tracking-[0.18em] font-medium text-white/40 mb-4">Последвайте ни</div>
+              <div className="text-[10px] uppercase tracking-[0.18em] font-medium text-white/55 mb-4">Последвайте ни</div>
               <div className="flex items-center gap-3">
                 <a href="https://facebook.com/JustPablo.official" target="_blank" rel="noreferrer" aria-label="Facebook"
                   className="w-11 h-11 rounded-full border border-white/15 flex items-center justify-center text-white/70 hover:bg-[#DC2626] hover:border-[#DC2626] hover:text-white transition-all duration-300">
@@ -50,11 +50,11 @@ export default function LandingFooter() {
               </div>
             </div>
           </div>
-          <div className="mt-12 pt-6 border-t border-white/10 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 text-xs font-light text-white/40">
+          <div className="mt-12 pt-6 border-t border-white/10 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 text-xs font-light text-white/55">
             <span>© {new Date().getFullYear()} Just Pablo Digital. Всички права запазени.</span>
             <span className="flex items-center gap-5">
-              <a href="./biskvitki.html" className="hover:text-white transition-colors">Политика за бисквитки</a>
-              <a href="./poveritelnost.html" className="hover:text-white transition-colors">Защита на личните данни</a>
+              <a href="./biskvitki.html" className="hover:text-white transition-colors inline-block py-2">Политика за бисквитки</a>
+              <a href="./poveritelnost.html" className="hover:text-white transition-colors inline-block py-2">Защита на личните данни</a>
             </span>
           </div>
         </div>

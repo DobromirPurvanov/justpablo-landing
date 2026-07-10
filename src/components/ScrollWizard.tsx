@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import gsap from 'gsap'
 import { maskReveal } from '../lib/motion'
+import LogoFace from './LogoFace'
 
 const questions = [
   { id: 'brandName', title: 'Каква е дейността на вашата марка?', subtitle: 'Нека се запознаем. След този въпрос имаме още няколко, които ще ни помогнат да научим повече за вас. Попълването им отнема само минута.', type: 'text', placeholder: 'предмет на дейност' },
@@ -58,6 +59,8 @@ export default function ScrollWizard() {
   const [isSuccess, setIsSuccess] = useState(false)
   const rootRef = useRef<HTMLDivElement>(null)
   const animating = useRef(false)
+  // На touch устройства не отваряме клавиатурата насила при смяна на стъпка
+  const finePointer = useRef(typeof window !== 'undefined' && window.matchMedia('(pointer: fine)').matches)
 
   useEffect(() => {
     const el = rootRef.current
@@ -105,7 +108,7 @@ export default function ScrollWizard() {
   const answerArea = (
     <div className="w-full max-w-md mx-auto text-center">
       {q.type === 'radio' && q.options && (
-        <div className="flex flex-col items-center gap-4">
+        <div className="flex flex-col items-center gap-2">
           {q.options.map(opt => {
             const selected = formData[q.id] === opt
             return (
@@ -113,7 +116,7 @@ export default function ScrollWizard() {
                 key={opt}
                 aria-pressed={selected}
                 onClick={() => { setValue(q.id, opt); window.setTimeout(next, 300) }}
-                className="group flex items-center gap-3 text-left"
+                className="group flex items-center gap-3 text-left py-2 min-h-[44px]"
               >
                 <span className={`transition-all duration-300 ${selected ? 'opacity-100 translate-x-0' : 'opacity-0 -translate-x-2 group-hover:opacity-60 group-hover:translate-x-0'}`}>
                   <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#DC2626" strokeWidth="3">
@@ -130,7 +133,7 @@ export default function ScrollWizard() {
       )}
 
       {q.type === 'checkbox' && q.options && (
-        <div className="flex flex-col items-start gap-4 w-fit mx-auto">
+        <div className="flex flex-col items-start gap-2 w-fit mx-auto">
           {q.options.map(opt => {
             const selected = ((formData[q.id] as string[]) || []).includes(opt)
             return (
@@ -138,7 +141,7 @@ export default function ScrollWizard() {
                 key={opt}
                 aria-pressed={selected}
                 onClick={() => toggleCheckbox(q.id, opt)}
-                className="group flex items-center gap-3.5 text-left"
+                className="group flex items-center gap-3.5 text-left py-2 min-h-[44px]"
               >
                 <span className={`w-[22px] h-[22px] rounded-[5px] border-2 flex items-center justify-center shrink-0 transition-all duration-300 ${selected ? 'bg-[#DC2626] border-[#DC2626]' : 'border-[#1A1A1A]/25 group-hover:border-[#DC2626]'}`}>
                   {selected && (
@@ -163,43 +166,46 @@ export default function ScrollWizard() {
             value={formData[q.id] || ''}
             onChange={e => setValue(q.id, e.target.value)}
             onKeyDown={e => { if (e.key === 'Enter' && !isLast) next() }}
-            autoFocus
+            autoFocus={finePointer.current}
+            enterKeyHint="next"
             className="w-full bg-transparent border-b-2 border-[#DC2626] px-0 py-3 text-xl lg:text-2xl font-light text-[#1A1A1A] text-center outline-none focus-visible:outline-none"
           />
-          <div className="text-sm font-light text-[#1A1A1A]/60 mt-3">{q.placeholder}</div>
+          <div className="text-sm font-light text-[#1A1A1A]/70 mt-3">{q.placeholder}</div>
         </div>
       )}
 
       {q.type === 'contact' && (
         <div className="flex flex-col gap-6 w-full max-w-xs mx-auto">
           {[
-            { id: 'name', type: 'text', label: 'име и фамилия' },
-            { id: 'email', type: 'email', label: 'e-mail адрес' },
-            { id: 'phone', type: 'tel', label: 'телефон' },
+            { id: 'name', type: 'text', label: 'име и фамилия', auto: 'name', hint: 'next' as const },
+            { id: 'email', type: 'email', label: 'e-mail адрес', auto: 'email', hint: 'next' as const },
+            { id: 'phone', type: 'tel', label: 'телефон', auto: 'tel', hint: 'done' as const },
           ].map((f, i) => (
             <div key={f.id}>
               <input
                 type={f.type}
                 value={formData[f.id] || ''}
                 onChange={e => setValue(f.id, e.target.value)}
-                autoFocus={i === 0}
+                autoFocus={i === 0 && finePointer.current}
+                autoComplete={f.auto}
+                enterKeyHint={f.hint}
                 className="w-full bg-transparent border-b-2 border-[#DC2626] px-0 py-2 text-lg font-light text-[#1A1A1A] text-center outline-none focus-visible:outline-none"
               />
-              <div className="text-xs font-light text-[#1A1A1A]/60 mt-2 text-center">{f.label}</div>
+              <div className="text-xs font-light text-[#1A1A1A]/70 mt-2 text-center">{f.label}</div>
             </div>
           ))}
         </div>
       )}
 
       {isLast && !canSubmit && (
-        <p className="text-xs font-light text-[#1A1A1A]/50 mt-6">Име и e-mail са задължителни.</p>
+        <p className="text-xs font-light text-[#1A1A1A]/65 mt-6">Име и e-mail са задължителни.</p>
       )}
 
       {isLast && (
         <button
           onClick={() => canSubmit && setIsSuccess(true)}
           disabled={!canSubmit}
-          className={`mt-8 inline-flex items-center gap-2 px-8 py-3.5 rounded-full text-sm font-medium transition-all duration-300 ${canSubmit ? 'bg-[#DC2626] text-white hover:bg-[#B91C1C] hover:scale-[1.03]' : 'bg-[#1A1A1A]/10 text-[#1A1A1A]/40 cursor-not-allowed'}`}
+          className={`mt-8 inline-flex items-center gap-2 px-8 py-3.5 rounded-full text-sm font-medium transition-all duration-300 ${canSubmit ? 'bg-[#DC2626] text-white hover:bg-[#B91C1C] hover:scale-[1.03] active:scale-95' : 'bg-[#1A1A1A]/10 text-[#1A1A1A]/40 cursor-not-allowed'}`}
         >
           Изпрати запитване
         </button>
@@ -210,9 +216,9 @@ export default function ScrollWizard() {
   /* ─── Успех ─── */
   if (isSuccess) {
     return (
-      <div ref={rootRef} className="min-h-[80vh] flex flex-col items-center justify-center text-center bg-white section-padding">
-        <div className="w-24 h-24 bg-[#DC2626] rounded-full flex items-center justify-center mb-10">
-          <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5"><polyline points="20 6 9 17 4 12" /></svg>
+      <div ref={rootRef} className="min-h-[80vh] supports-[height:100svh]:min-h-[80svh] flex flex-col items-center justify-center text-center bg-white section-padding">
+        <div className="w-32 lg:w-40 mb-10" aria-hidden="true">
+          <LogoFace />
         </div>
         <h1 className="wz-h1 font-thin-display text-[clamp(40px,7vw,84px)] text-[#1A1A1A] leading-none mb-6">Благодарим!</h1>
         <p className="text-base font-light text-[#1A1A1A]/60 max-w-md mb-10">
@@ -232,7 +238,7 @@ export default function ScrollWizard() {
   /* ─── Интро: Какъв е вашият бизнес? ─── */
   if (phase === 'intro') {
     return (
-      <div ref={rootRef} className="bg-white min-h-[85vh] flex items-center py-14">
+      <div ref={rootRef} className="bg-white min-h-[85vh] supports-[height:100svh]:min-h-[85svh] flex items-center py-14">
         <div className="section-padding w-full">
           <div className="container-max">
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
@@ -246,14 +252,14 @@ export default function ScrollWizard() {
                 </div>
               </div>
               <div className="lg:col-span-7 flex justify-center">
-                <div className="relative w-[300px] h-[300px] md:w-[440px] md:h-[440px] lg:w-[560px] lg:h-[560px] rounded-full border border-[#1A1A1A]/10 flex flex-col items-center justify-center gap-8">
+                <div className="relative w-[min(300px,84vw)] md:w-[440px] lg:w-[560px] aspect-square rounded-full border border-[#1A1A1A]/10 flex flex-col items-center justify-center gap-8">
                   <svg className="absolute inset-0 w-full h-full pointer-events-none" viewBox="0 0 100 100" aria-hidden="true">
                     <g transform="rotate(35 50 50)">
                       <circle cx="50" cy="50" r="49.6" fill="none" stroke="#DC2626" strokeWidth="0.9" strokeLinecap="round" pathLength="100" strokeDasharray="10 90" />
                     </g>
                   </svg>
                   {['Съществуващ бранд', 'Стартиращ бранд'].map(opt => (
-                    <button key={opt} onClick={() => startWizard(opt)} className="group flex items-center gap-3">
+                    <button key={opt} onClick={() => startWizard(opt)} className="group flex items-center gap-3 py-2 min-h-[44px]">
                       <span className="opacity-0 -translate-x-2 group-hover:opacity-100 group-hover:translate-x-0 transition-all duration-300">
                         <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#DC2626" strokeWidth="3">
                           <path d="M5 12h14M13 6l6 6-6 6" strokeLinecap="round" strokeLinejoin="round" />
@@ -273,7 +279,7 @@ export default function ScrollWizard() {
 
   /* ─── Wizard: активен въпрос + призрачни идващи + кръгът сцена ─── */
   return (
-    <div ref={rootRef} className="bg-white min-h-[92vh] py-8 lg:py-10 overflow-x-clip">
+    <div ref={rootRef} className="bg-white min-h-[92vh] supports-[height:100svh]:min-h-[92svh] py-8 lg:py-10 overflow-x-clip">
       <div className="section-padding">
         <div className="container-max">
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 items-start">
@@ -281,10 +287,13 @@ export default function ScrollWizard() {
             <div className="lg:col-span-2">
               <div className="flex lg:flex-col gap-4 lg:gap-3 lg:sticky lg:top-28">
                 {categories.map((c, i) => (
-                  <div key={c} className={`flex items-baseline gap-2 text-sm font-medium transition-colors duration-300 ${catOf(current) === i ? 'text-[#DC2626]' : 'text-[#1A1A1A]/55'}`}>
+                  <div key={c} className={`flex items-baseline gap-2 text-sm font-medium transition-colors duration-300 ${catOf(current) === i ? 'text-[#DC2626]' : 'text-[#1A1A1A]/65'}`}>
                     <span className="text-xs">{i + 1}</span>{c}
                   </div>
                 ))}
+                <span className="lg:hidden ml-auto text-xs font-medium text-[#1A1A1A]/60 self-center" aria-live="polite">
+                  {current + 1} / {questions.length}
+                </span>
               </div>
             </div>
 
@@ -305,7 +314,7 @@ export default function ScrollWizard() {
                 ))}
               </div>
 
-              <div className="mt-10 text-xs font-light text-[#1A1A1A]/55">
+              <div className="mt-10 text-xs font-light text-[#1A1A1A]/65">
                 Предпочитате директно? <a href="mailto:info@justpablo.bg" className="text-[#DC2626] hover:underline">info@justpablo.bg</a>
               </div>
             </div>
@@ -338,7 +347,7 @@ export default function ScrollWizard() {
 
                 {/* ПРЕДИШЕН — вертикално на десния ръб */}
                 {current > 0 && (
-                  <button onClick={prev} className="absolute right-[2%] top-1/2 -translate-y-1/2 flex flex-col items-center gap-3 text-[#1A1A1A]/45 hover:text-[#1A1A1A] transition-colors group">
+                  <button onClick={prev} className="absolute right-[2%] top-1/2 -translate-y-1/2 flex flex-col items-center gap-3 text-[#1A1A1A]/60 hover:text-[#1A1A1A] transition-colors group">
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="group-hover:-translate-y-1 transition-transform">
                       <path d="M12 19V5M5 12l7-7 7 7" strokeLinecap="round" strokeLinejoin="round" />
                     </svg>
@@ -367,13 +376,13 @@ export default function ScrollWizard() {
                 {answerArea}
                 <div className="flex items-center gap-4 mt-8">
                   {current > 0 && (
-                    <button onClick={prev} className="flex items-center gap-2 text-sm font-light text-[#1A1A1A]/55 py-2">
+                    <button onClick={prev} className="flex items-center gap-2 text-sm font-light text-[#1A1A1A]/65 py-3 min-h-[44px]">
                       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M19 12H5M11 18l-6-6 6-6" strokeLinecap="round" strokeLinejoin="round" /></svg>
                       Назад
                     </button>
                   )}
                   {!isLast && (
-                    <button onClick={next} className="flex items-center gap-2 bg-[#DC2626] text-white px-6 py-3 rounded-full text-sm font-medium">
+                    <button onClick={next} className="flex items-center gap-2 bg-[#DC2626] text-white px-6 py-3 rounded-full text-sm font-medium active:scale-95 transition-transform duration-200">
                       Следващ
                       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2"><path d="M12 5v14M19 12l-7 7-7-7" strokeLinecap="round" strokeLinejoin="round" /></svg>
                     </button>

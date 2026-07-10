@@ -29,6 +29,8 @@ export default function PriceSpotlight() {
           <img
             src="./images/mustache.png"
             alt=""
+            width={324}
+            height={95}
             aria-hidden="true"
             loading="lazy"
             decoding="async"
@@ -43,8 +45,8 @@ export default function PriceSpotlight() {
           <div className="ps-item mb-2">
             <span className="text-[clamp(56px,8vw,110px)] font-extralight text-[#DC2626] leading-none tracking-tight">485 €</span>
           </div>
-          <div className="ps-item text-base font-light text-[#1A1A1A]/50 mb-2">{bgn(485)}</div>
-          <div className="ps-item text-xs uppercase tracking-[0.18em] font-medium text-[#1A1A1A]/50 mb-10">
+          <div className="ps-item text-base font-light text-[#1A1A1A]/60 mb-2">{bgn(485)}</div>
+          <div className="ps-item text-xs uppercase tracking-[0.18em] font-medium text-[#1A1A1A]/60 mb-10">
             еднократно · единствената ни публична цена · задължителен първи етап
           </div>
 
@@ -61,7 +63,7 @@ export default function PriceSpotlight() {
 
           <button
             onClick={() => scrollToId('zapitvane')}
-            className="ps-item inline-flex items-center gap-2 bg-[#DC2626] text-white px-8 py-4 rounded-full text-sm uppercase tracking-[0.12em] font-medium hover:bg-[#B91C1C] hover:scale-[1.03] transition-all duration-300"
+            className="ps-item inline-flex items-center gap-2 bg-[#DC2626] text-white px-8 py-4 rounded-full text-sm uppercase tracking-[0.12em] font-medium hover:bg-[#B91C1C] hover:scale-[1.03] active:scale-95 transition-all duration-300"
           >
             Заяви анализ
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">

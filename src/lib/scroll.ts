@@ -8,3 +8,10 @@ export function scrollToId(id: string) {
   if (lenis) lenis.scrollTo(el, { offset: -4 })
   else el.scrollIntoView({ behavior: 'smooth' })
 }
+
+/** Плавен скрол до върха — през Lenis, ако е активен */
+export function scrollToTop() {
+  const lenis = (window as unknown as { __lenis?: LenisLike }).__lenis
+  if (lenis) lenis.scrollTo(0)
+  else window.scrollTo({ top: 0, behavior: 'smooth' })
+}

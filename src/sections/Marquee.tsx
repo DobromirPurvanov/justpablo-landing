@@ -16,6 +16,8 @@ function MarqueeRow({ items, direction, outline }: { items: string[]; direction:
           <img
             src="./images/mustache-red.png"
             alt=""
+            width={324}
+            height={95}
             loading="lazy"
             decoding="async"
             draggable={false}

@@ -31,7 +31,7 @@ export default function LandingHero() {
   }, [])
 
   return (
-    <section ref={sectionRef} className="relative bg-white pt-28 lg:pt-36 pb-16 lg:pb-24 overflow-hidden min-h-[92vh] flex items-center">
+    <section ref={sectionRef} className="relative bg-white pt-28 lg:pt-36 pb-16 lg:pb-24 overflow-hidden min-h-[92vh] supports-[height:100svh]:min-h-[92svh] flex items-center">
       <div className="absolute top-[15%] right-[-8%] w-[320px] h-[320px] lg:w-[520px] lg:h-[520px] rounded-full bg-[#DC2626]/[0.04] blur-3xl pointer-events-none" />
 
       {/* Интерактивното лого — очите следват мишката */}
@@ -56,7 +56,7 @@ export default function LandingHero() {
           <div className="flex flex-wrap items-center gap-4 mt-10">
             <button
               onClick={() => scrollToId('zapitvane')}
-              className="hero-cta inline-flex items-center gap-2 bg-[#DC2626] text-white px-8 py-4 rounded-full text-sm uppercase tracking-[0.12em] font-medium hover:bg-[#B91C1C] hover:scale-[1.03] transition-all duration-300"
+              className="hero-cta inline-flex items-center gap-2 bg-[#DC2626] text-white px-8 py-4 rounded-full text-sm uppercase tracking-[0.12em] font-medium hover:bg-[#B91C1C] hover:scale-[1.03] active:scale-95 transition-all duration-300"
             >
               Заяви запитване
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">

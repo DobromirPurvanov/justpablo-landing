@@ -130,7 +130,7 @@ export function wordsReveal(paragraph: Element) {
   const words = splitWords(paragraph)
   if (!words.length) return
   gsap.fromTo(words,
-    { opacity: 0.14 },
+    { opacity: 0.25 },
     {
       opacity: 1,
       stagger: 0.015,
