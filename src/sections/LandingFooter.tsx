@@ -1,6 +1,16 @@
+import LogoFace from '../components/LogoFace'
+
 export default function LandingFooter() {
   return (
-    <footer id="contacts" className="bg-[#1A1A1A] text-white">
+    <footer id="contacts" className="relative bg-[#1A1A1A] text-white">
+      {/* Pablo наднича над ръба на футъра — вижда се само горната половина (очила + очи),
+          мустакът остава „скрит" зад черната стена. Очите следват мишката / оглеждат се на touch. */}
+      <div
+        aria-hidden="true"
+        className="absolute bottom-full right-6 lg:right-16 w-[112px] h-[63px] lg:w-[176px] lg:h-[99px] overflow-hidden pointer-events-none select-none"
+      >
+        <LogoFace className="w-full" />
+      </div>
       <div className="section-padding py-14 lg:py-16">
         <div className="container-max">
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-10">

@@ -70,6 +70,13 @@ export default function LandingHero() {
               Виж цената
             </button>
           </div>
+
+          {/* Мобилно: Pablo се оглежда сам и мига (desktop версията е вдясно, абсолютно позиционирана) */}
+          <div className="md:hidden mt-12 flex justify-end pr-1">
+            <div className="face-inner w-[min(54vw,240px)]">
+              <LogoFace />
+            </div>
+          </div>
         </div>
       </div>
     </section>

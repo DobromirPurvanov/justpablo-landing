@@ -26,6 +26,15 @@ export default function PriceSpotlight() {
     <section ref={ref} id="cena" className="bg-[#F5F5F5] py-16 lg:py-24">
       <div className="section-padding">
         <div className="container-max text-center max-w-3xl mx-auto">
+          <img
+            src="./images/mustache.png"
+            alt=""
+            aria-hidden="true"
+            loading="lazy"
+            decoding="async"
+            draggable={false}
+            className="ps-item mx-auto w-14 h-auto mb-5 select-none"
+          />
           <span className="text-[10px] uppercase tracking-[0.2em] font-light text-[#DC2626] block mb-4">Прозрачно ценообразуване</span>
           <h2 className="ps-h2 font-thin-display text-3xl lg:text-5xl text-[#1A1A1A] leading-tight mb-8">
             Premium Digital Analysis

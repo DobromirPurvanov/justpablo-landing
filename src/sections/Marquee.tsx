@@ -13,7 +13,14 @@ function MarqueeRow({ items, direction, outline }: { items: string[]; direction:
           <span className={`whitespace-nowrap text-[clamp(28px,5vw,60px)] font-extralight leading-[1.18] tracking-tight ${outline ? 'text-outline-red' : 'text-[#1A1A1A]'}`}>
             {item}
           </span>
-          <span className="mx-6 lg:mx-10 w-2 h-2 lg:w-2.5 lg:h-2.5 rounded-full bg-[#DC2626] shrink-0" />
+          <img
+            src="./images/mustache-red.png"
+            alt=""
+            loading="lazy"
+            decoding="async"
+            draggable={false}
+            className="mx-6 lg:mx-10 w-9 lg:w-12 h-auto shrink-0 select-none"
+          />
         </span>
       ))}
     </div>
