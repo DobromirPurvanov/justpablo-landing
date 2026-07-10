@@ -27,11 +27,11 @@ export default function PriceSpotlight() {
   const handleMouseEnter = () => {
     if (ctaMascotRef.current) {
       gsap.to(ctaMascotRef.current, {
-        scale: 1.2,
-        y: -12,
-        rotate: 12,
-        duration: 0.4,
-        ease: 'back.out(2)'
+        scale: 1.18,
+        y: -10,
+        rotate: 8,
+        duration: 0.35,
+        ease: 'back.out(1.8)'
       })
     }
   }
@@ -42,7 +42,7 @@ export default function PriceSpotlight() {
         scale: 1,
         y: 0,
         rotate: 0,
-        duration: 0.3,
+        duration: 0.25,
         ease: 'power2.out'
       })
     }
@@ -76,13 +76,13 @@ export default function PriceSpotlight() {
             ))}
           </div>
 
-          {/* КОНТЕНЕР ЗА БУТОНА + МАСКОТА */}
+          {/* КОНТЕНЕР ЗА БУТОНА + АНИМИРАНИЯ МАСКОТ */}
           <div className="ps-item relative inline-block mt-4">
             <img 
               ref={ctaMascotRef}
               src="./images/mascot-cta.png" 
               alt="Mascot Guard" 
-              className="absolute -top-16 -right-12 w-14 h-auto pointer-events-none select-none z-10 origin-bottom"
+              className="absolute -top-14 -right-10 w-12 h-auto pointer-events-none select-none z-10 origin-bottom"
               draggable={false}
             />
 

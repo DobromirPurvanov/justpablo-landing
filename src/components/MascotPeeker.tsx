@@ -8,9 +8,14 @@ interface MascotPeekerProps {
   triggerId: string
   imageSrc: string
   side?: 'left' | 'right'
+  bottomClassName?: string
 }
 
-export default function MascotPeeker({ triggerId, imageSrc, side = 'right' }: MascotPeekerProps) {
+/**
+ * Гъвкав компонент за маскоти, които надничат от краищата на екрана.
+ * Напълно интегриран с Lenis SmoothScroll и GSAP ScrollTrigger за перфектен флуиден пърформанс.
+ */
+export default function MascotPeeker({ triggerId, imageSrc, side = 'right', bottomClassName = 'bottom-[15%]' }: MascotPeekerProps) {
   const mascotRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
@@ -19,20 +24,21 @@ export default function MascotPeeker({ triggerId, imageSrc, side = 'right' }: Ma
     if (!el || !targetTrigger) return
 
     const ctx = gsap.context(() => {
-      gsap.set(el, { xPercent: side === 'right' ? 110 : -110 })
+      // Изначално скриваме маскота извън пределите на екрана
+      gsap.set(el, { xPercent: side === 'right' ? 120 : -120 })
 
       gsap.to(el, {
         xPercent: side === 'right' ? 15 : -15,
-        duration: 0.6,
-        ease: 'back.out(1.4)',
+        duration: 0.7,
+        ease: 'back.out(1.2)',
         scrollTrigger: {
           trigger: targetTrigger,
-          start: 'top 60%',
+          start: 'top 70%',
           end: 'bottom 20%',
           toggleActions: 'play reverse play reverse',
         }
       })
-    })
+    }, el)
 
     return () => ctx.revert()
   }, [triggerId, side])
@@ -40,7 +46,7 @@ export default function MascotPeeker({ triggerId, imageSrc, side = 'right' }: Ma
   return (
     <div
       ref={mascotRef}
-      className={`fixed bottom-[15%] z-50 w-32 lg:w-44 pointer-events-none ${
+      className={`fixed ${bottomClassName} z-40 w-28 md:w-36 lg:w-44 pointer-events-none ${
         side === 'right' ? 'right-0' : 'left-0'
       }`}
     >
