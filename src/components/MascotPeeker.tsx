@@ -11,20 +11,22 @@ interface MascotPeekerProps {
   bottomClassName?: string
 }
 
-/**
- * Гъвкав компонент за маскоти, които надничат от краищата на екрана.
- * Напълно интегриран с Lenis SmoothScroll и GSAP ScrollTrigger за перфектен флуиден пърформанс.
- */
-export default function MascotPeeker({ triggerId, imageSrc, side = 'right', bottomClassName = 'bottom-[15%]' }: MascotPeekerProps) {
+export default function MascotPeeker({ 
+  triggerId, 
+  imageSrc, 
+  side = 'right', 
+  bottomClassName = 'bottom-[15%]' 
+}: MascotPeekerProps) {
   const mascotRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     const el = mascotRef.current
+    if (!el) return
+
     const targetTrigger = document.getElementById(triggerId)
-    if (!el || !targetTrigger) return
+    if (!targetTrigger) return
 
     const ctx = gsap.context(() => {
-      // Изначално скриваме маскота извън пределите на екрана
       gsap.set(el, { xPercent: side === 'right' ? 120 : -120 })
 
       gsap.to(el, {

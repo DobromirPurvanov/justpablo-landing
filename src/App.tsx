@@ -27,7 +27,6 @@ export default function App() {
       </div>
       <CustomCursor />
 
-      {/* Изскачащи маскоти при скрол, напълно синхронизирани с Lenis + ScrollTrigger */}
       <MascotPeeker triggerId="pillars" imageSrc="./images/mascot-pillars.png" side="left" bottomClassName="bottom-[20%]" />
       <MascotPeeker triggerId="cena" imageSrc="./images/mascot-peeking.png" side="right" bottomClassName="bottom-[15%]" />
     </SmoothScroll>

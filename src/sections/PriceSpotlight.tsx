@@ -76,7 +76,6 @@ export default function PriceSpotlight() {
             ))}
           </div>
 
-          {/* КОНТЕНЕР ЗА БУТОНА + АНИМИРАНИЯ МАСКОТ */}
           <div className="ps-item relative inline-block mt-4">
             <img 
               ref={ctaMascotRef}
