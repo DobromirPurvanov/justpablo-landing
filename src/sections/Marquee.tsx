@@ -2,15 +2,15 @@ import { useEffect, useRef } from 'react'
 import gsap from 'gsap'
 import { reveal } from '../lib/motion'
 
-const rowOne = ['Комуникационна стратегия', 'SEO оптимизация', 'Google Ads', 'Криейтив', 'Брандинг', 'Рекламни кампании', 'Омниканален маркетинг', 'Business Intelligence']
-const rowTwo = ['Маркетинг автоматизация', 'Визуална идентичност', 'Постинг план', 'Viber маркетинг', 'SMS кампании', 'Инсайти', 'Планинг', 'Ключови предимства']
+const rowOne = ['Комуникационна стратегия', 'SEO оптимизация', 'GEO — видимост в AI търсачки', 'Google Ads', 'Meta Ads', 'Инфлуенсър маркетинг', 'Брандинг', 'Криейтив и UGC']
+const rowTwo = ['TikTok и Reels', 'Performance Max', 'CRO — оптимизация на конверсии', 'Email автоматизации', 'AI съдържание', 'Маркетинг автоматизация', 'Ремаркетинг', 'Business Intelligence']
 
 function MarqueeRow({ items, direction, outline }: { items: string[]; direction: 'left' | 'right'; outline?: boolean }) {
   const content = (hidden: boolean) => (
     <div className="flex items-center shrink-0" aria-hidden={hidden || undefined}>
       {items.map(item => (
         <span key={item} className="flex items-center shrink-0">
-          <span className={`whitespace-nowrap text-[clamp(28px,5vw,60px)] font-extralight leading-none tracking-tight ${outline ? 'text-outline-red' : 'text-[#1A1A1A]'}`}>
+          <span className={`whitespace-nowrap text-[clamp(28px,5vw,60px)] font-extralight leading-[1.18] tracking-tight ${outline ? 'text-outline-red' : 'text-[#1A1A1A]'}`}>
             {item}
           </span>
           <span className="mx-6 lg:mx-10 w-2 h-2 lg:w-2.5 lg:h-2.5 rounded-full bg-[#DC2626] shrink-0" />
