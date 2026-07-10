@@ -23,7 +23,7 @@ export default function PriceSpotlight() {
   }, [])
 
   return (
-    <section ref={ref} className="bg-white py-16 lg:py-24">
+    <section ref={ref} id="cena" className="bg-[#F5F5F5] py-16 lg:py-24">
       <div className="section-padding">
         <div className="container-max text-center max-w-3xl mx-auto">
           <span className="text-[10px] uppercase tracking-[0.2em] font-light text-[#DC2626] block mb-4">Прозрачно ценообразуване</span>

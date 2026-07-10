@@ -3,7 +3,6 @@ import LandingHero from './sections/LandingHero'
 import StatsBand from './components/StatsBand'
 import Marquee from './sections/Marquee'
 import Pillars from './sections/Pillars'
-import ResultsGrid from './sections/ResultsGrid'
 import PriceSpotlight from './sections/PriceSpotlight'
 import WizardSection from './sections/WizardSection'
 import LandingFooter from './sections/LandingFooter'
@@ -20,7 +19,6 @@ export default function App() {
           <StatsBand />
           <Marquee />
           <Pillars />
-          <ResultsGrid />
           <PriceSpotlight />
           <WizardSection />
         </main>

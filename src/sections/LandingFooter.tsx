@@ -24,14 +24,28 @@ export default function LandingFooter() {
             </div>
             <div className="lg:col-span-3">
               <div className="text-[10px] uppercase tracking-[0.18em] font-medium text-white/40 mb-4">Последвайте ни</div>
-              <div className="flex flex-col gap-2">
-                <a href="https://facebook.com/JustPablo.official" target="_blank" rel="noreferrer" className="text-sm font-light text-white/70 hover:text-[#DC2626] transition-colors">Facebook — /JustPablo.official</a>
-                <a href="https://instagram.com/justpablo_official" target="_blank" rel="noreferrer" className="text-sm font-light text-white/70 hover:text-[#DC2626] transition-colors">Instagram — @justpablo_official</a>
+              <div className="flex items-center gap-3">
+                <a href="https://facebook.com/JustPablo.official" target="_blank" rel="noreferrer" aria-label="Facebook"
+                  className="w-11 h-11 rounded-full border border-white/15 flex items-center justify-center text-white/70 hover:bg-[#DC2626] hover:border-[#DC2626] hover:text-white transition-all duration-300">
+                  <svg width="17" height="17" viewBox="0 0 24 24" fill="currentColor"><path d="M13.5 21v-8h2.7l.4-3.1h-3.1V7.9c0-.9.3-1.5 1.6-1.5h1.6V3.6c-.3 0-1.3-.1-2.4-.1-2.4 0-4 1.4-4 4.1v2.3H7.6V13h2.7v8h3.2z"/></svg>
+                </a>
+                <a href="https://instagram.com/justpablo_official" target="_blank" rel="noreferrer" aria-label="Instagram"
+                  className="w-11 h-11 rounded-full border border-white/15 flex items-center justify-center text-white/70 hover:bg-[#DC2626] hover:border-[#DC2626] hover:text-white transition-all duration-300">
+                  <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4.2"/><circle cx="17.3" cy="6.7" r="1.1" fill="currentColor" stroke="none"/></svg>
+                </a>
+                <a href="https://tiktok.com/@justpablo_official" target="_blank" rel="noreferrer" aria-label="TikTok"
+                  className="w-11 h-11 rounded-full border border-white/15 flex items-center justify-center text-white/70 hover:bg-[#DC2626] hover:border-[#DC2626] hover:text-white transition-all duration-300">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M16.6 3c.4 2.2 1.9 3.9 4.4 4.1v3c-1.7 0-3.2-.5-4.4-1.4v6.6c0 3.6-2.6 6.2-6 6.2-3.3 0-5.9-2.4-5.9-5.8 0-3.3 2.6-5.9 6-5.9.4 0 .7 0 1 .1v3.2c-.3-.1-.7-.2-1-.2-1.6 0-2.8 1.2-2.8 2.8 0 1.6 1.2 2.7 2.8 2.7 1.7 0 2.9-1.2 2.9-3.1V3h3z"/></svg>
+                </a>
               </div>
             </div>
           </div>
-          <div className="mt-12 pt-6 border-t border-white/10 text-xs font-light text-white/40">
-            © {new Date().getFullYear()} Just Pablo Digital. Всички права запазени.
+          <div className="mt-12 pt-6 border-t border-white/10 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 text-xs font-light text-white/40">
+            <span>© {new Date().getFullYear()} Just Pablo Digital. Всички права запазени.</span>
+            <span className="flex items-center gap-5">
+              <a href="./biskvitki.html" className="hover:text-white transition-colors">Политика за бисквитки</a>
+              <a href="./poveritelnost.html" className="hover:text-white transition-colors">Защита на личните данни</a>
+            </span>
           </div>
         </div>
       </div>

@@ -172,6 +172,8 @@ export function maskReveal(target: Element | null, trigger: Element | null, opts
     while (target.firstChild) inner.appendChild(target.firstChild)
     target.appendChild(inner)
     ;(target as HTMLElement).style.overflow = 'hidden'
+    ;(target as HTMLElement).style.paddingBottom = '0.14em'
+    ;(target as HTMLElement).style.marginBottom = '-0.14em'
   }
   gsap.fromTo(inner,
     { yPercent: 115 },

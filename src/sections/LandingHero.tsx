@@ -44,9 +44,9 @@ export default function LandingHero() {
       <div className="section-padding w-full relative z-10">
         <div className="container-max">
           <h1 ref={titleRef} className="font-thin-display text-[clamp(44px,7.5vw,110px)] text-[#1A1A1A] leading-[1.02]">
-            <span className="block overflow-hidden"><span className="hero-line block">Дигитален</span></span>
-            <span className="block overflow-hidden"><span className="hero-line block">маркетинг и</span></span>
-            <span className="block overflow-hidden"><span className="hero-line block text-[#DC2626]">бизнес развитие</span></span>
+            <span className="block overflow-hidden pb-[0.14em] -mb-[0.14em]"><span className="hero-line block">Дигитален</span></span>
+            <span className="block overflow-hidden pb-[0.14em] -mb-[0.14em]"><span className="hero-line block">маркетинг и</span></span>
+            <span className="block overflow-hidden pb-[0.14em] -mb-[0.14em]"><span className="hero-line block text-[#DC2626]">бизнес развитие</span></span>
           </h1>
 
           <p className="hero-sub mt-8 text-base lg:text-lg font-light text-[#1A1A1A]/60 max-w-md leading-relaxed">
@@ -64,10 +64,10 @@ export default function LandingHero() {
               </svg>
             </button>
             <button
-              onClick={() => scrollToId('rezultati')}
+              onClick={() => scrollToId('cena')}
               className="hero-cta inline-flex items-center gap-2 text-sm uppercase tracking-[0.12em] font-medium text-[#1A1A1A]/70 hover:text-[#DC2626] px-2 py-4 transition-colors duration-300"
             >
-              Виж резултатите
+              Виж цената
             </button>
           </div>
         </div>

@@ -7,6 +7,15 @@ import { inspectAttr } from 'kimi-plugin-inspect-react'
 export default defineConfig({
   base: './',
   plugins: [inspectAttr(), react()],
+  build: {
+    rollupOptions: {
+      input: {
+        main: path.resolve(__dirname, 'index.html'),
+        biskvitki: path.resolve(__dirname, 'biskvitki.html'),
+        poveritelnost: path.resolve(__dirname, 'poveritelnost.html'),
+      },
+    },
+  },
   server: {
     port: 3000,
   },
