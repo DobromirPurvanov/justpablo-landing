@@ -6,7 +6,7 @@ export type Stat = { value: string; label: string }
 
 const defaultStats: Stat[] = [
   { value: '700 000+', label: 'души обща аудитория' },
-  { value: '20.6M', label: 'импресии на седмица' },
+  { value: '50M+', label: 'импресии на седмица' },
   { value: '31%', label: 'от всички 18–24 г. в България' },
   { value: '2013', label: 'годината, в която започнахме' },
 ]
