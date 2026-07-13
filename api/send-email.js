@@ -39,6 +39,7 @@ export default async function handler(req, res) {
     }
 
     const fromAddress = process.env.FROM_EMAIL || 'JustPablo <onboarding@resend.dev>'
+    console.log('[send-email] from:', fromAddress, '| to:', recipients, '| FROM_EMAIL set:', Boolean(process.env.FROM_EMAIL))
     const resend = new Resend(apiKey)
 
     const results = await Promise.allSettled(
