@@ -142,7 +142,9 @@ export default function ScrollWizard() {
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({})
   const [resume, setResume] = useState<{ formData: Record<string, any>; current: number; phase: 'intro' | 'wizard' } | null>(null)
   const rootRef = useRef<HTMLDivElement>(null)
-  const contentRef = useRef<HTMLDivElement>(null)
+  const contentRef = useRef<HTMLDivElement>(null)        // desktop скрол-зона в кръга
+  const mobileScrollRef = useRef<HTMLDivElement>(null)   // mobile скрол-зона в картата
+  const [moreBelow, setMoreBelow] = useState(false)      // има ли още съдържание надолу (desktop индикатор)
   // На touch устройства не отваряме клавиатурата насила при смяна на стъпка
   const finePointer = useRef(typeof window !== 'undefined' && window.matchMedia('(pointer: fine)').matches)
 
@@ -316,8 +318,8 @@ export default function ScrollWizard() {
      на документа го разсинхронизира ("скролът бяга"). */
   useEffect(() => {
     if (phase !== 'wizard' || isSuccess) return
-    const container = contentRef.current
-    if (container) container.scrollTop = 0
+    if (contentRef.current) contentRef.current.scrollTop = 0
+    if (mobileScrollRef.current) mobileScrollRef.current.scrollTop = 0
     const timer = window.setTimeout(() => {
       const focusable = rootRef.current?.querySelector<HTMLElement>('.wz-opt, input[data-field], input[type="text"], [role="checkbox"]')
       if (!focusable) return
@@ -326,6 +328,19 @@ export default function ScrollWizard() {
       focusable.focus({ preventScroll: true })
     }, 420)
     return () => window.clearTimeout(timer)
+  }, [current, phase, isSuccess])
+
+  /* Индикатор „още съдържание надолу" в кръга (desktop). ResizeObserver
+     хваща и промяна на височината — напр. когато се появи броячът „Избрани". */
+  useEffect(() => {
+    if (phase !== 'wizard' || isSuccess) return
+    const el = contentRef.current
+    if (!el) return
+    const update = () => setMoreBelow(el.scrollHeight - el.scrollTop - el.clientHeight > 8)
+    update()
+    const ro = new ResizeObserver(update)
+    ro.observe(el)
+    return () => ro.disconnect()
   }, [current, phase, isSuccess])
 
   const resetAll = () => {
@@ -696,18 +711,17 @@ export default function ScrollWizard() {
 
             {/* Кръгът: ring progress с точки отвън, зони А/Б/В вътре (desktop) */}
             <div className="hidden lg:flex lg:col-span-8 justify-center xl:justify-end">
-              <div className="wz-shake relative w-[min(48vw,680px)] aspect-square shrink-0">
+              <div className="wz-shake relative w-[min(46vw,640px,78vh)] aspect-square shrink-0">
                 <ProgressRing current={current} total={questions.length} />
                 <div className="absolute inset-[4.5%] rounded-full bg-white border border-[#E5E5E5] shadow-[0_8px_40px_rgba(0,0,0,0.08)]">
                   <div className="wz-anim absolute inset-0 flex flex-col items-center justify-between pt-[7%] pb-[6%] px-[10%]">
                     {zoneA}
                     <div
                       ref={contentRef}
+                      data-lenis-prevent
+                      onScroll={e => setMoreBelow(e.currentTarget.scrollHeight - e.currentTarget.scrollTop - e.currentTarget.clientHeight > 8)}
                       className="w-full max-w-[480px] flex-1 min-h-0 flex flex-col items-center gap-4 lg:gap-5 my-2 lg:my-3 overflow-y-auto scroll-smooth overscroll-contain [&::-webkit-scrollbar]:hidden [scrollbar-width:none]"
-                      style={{
-                        maskImage: 'linear-gradient(to bottom, transparent 0, #000 14px, #000 calc(100% - 14px), transparent 100%)',
-                        WebkitMaskImage: 'linear-gradient(to bottom, transparent 0, #000 14px, #000 calc(100% - 14px), transparent 100%)',
-                      }}
+                      style={moreBelow ? { maskImage: 'linear-gradient(to bottom, #000 calc(100% - 40px), transparent 100%)', WebkitMaskImage: 'linear-gradient(to bottom, #000 calc(100% - 40px), transparent 100%)' } : undefined}
                     >
                       {zoneTitle}
                       {answerArea}
@@ -722,7 +736,7 @@ export default function ScrollWizard() {
             {/* Мобилно: заоблена карта вместо кръг — духът на дизайна, повече място */}
             <div className="lg:hidden">
               <div className="wz-shake rounded-[24px] border border-[#E5E5E5] bg-white shadow-[0_8px_40px_rgba(0,0,0,0.08)] p-6 min-h-[450px] max-h-[calc(100svh-180px)] flex flex-col">
-                <div ref={contentRef} className="wz-anim flex flex-col items-center gap-5 flex-1 overflow-y-auto scroll-smooth overscroll-contain [&::-webkit-scrollbar]:hidden [scrollbar-width:none]">
+                <div ref={mobileScrollRef} data-lenis-prevent className="wz-anim flex flex-col items-center gap-5 flex-1 overflow-y-auto scroll-smooth overscroll-contain [&::-webkit-scrollbar]:hidden [scrollbar-width:none]">
                   {zoneA}
                   {zoneTitle}
                   {answerArea}
