@@ -152,7 +152,10 @@ export function wordsReveal(paragraph: Element) {
     Работи с "+420%", "28%", "-15%" — префиксът и суфиксът се запазват.
     Стойности без водеща цифра (напр. "x3") остават статични. */
 export function countUp(el: Element, opts: { delay?: number; duration?: number; trigger?: Element | null } = {}) {
-  const raw = el.textContent ?? ''
+  // Пазим оригиналната стойност веднъж — иначе при повторен mount
+  // (React StrictMode / HMR) четем вече занулен текст и целта става 0.
+  const raw = (el as HTMLElement).dataset.countup ?? el.textContent ?? ''
+  if (!(el as HTMLElement).dataset.countup) (el as HTMLElement).dataset.countup = raw
   const m = raw.match(/^([+\-]?)(\d+)([\s\S]*)$/)
   if (!m) return
   const [, prefix, numStr, suffix] = m
