@@ -18,7 +18,9 @@ export default function LandingHero() {
       const tl = gsap.timeline({ delay: 0.15 })
       tl.from('.hero-line', { yPercent: 112, duration: 1.1, stagger: 0.12, ease: 'power3.out' })
         .from('.hero-sub', { y: 24, opacity: 0, duration: 0.8, ease: 'power3.out' }, '-=0.7')
-        .from('.hero-cta', { y: 20, opacity: 0, duration: 0.7, stagger: 0.1, ease: 'power3.out', clearProps: 'transform' }, '-=0.6')
+        // CTA бутоните анимираме само по y (без opacity), за да не остават
+        // невидими, ако анимацията се прекъсне при re-render (StrictMode/HMR).
+        .from('.hero-cta', { y: 20, duration: 0.7, stagger: 0.1, ease: 'power3.out', clearProps: 'transform' }, '-=0.6')
         .from('.face-inner', { opacity: 0, scale: 0.94, duration: 1.1, ease: 'power3.out' }, '-=0.9')
 
       const mm = gsap.matchMedia()
