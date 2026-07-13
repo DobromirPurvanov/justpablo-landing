@@ -67,12 +67,12 @@ function ProgressRing({ current, total }: { current: number; total: number }) {
   return (
     <svg className="absolute inset-0 w-full h-full pointer-events-none" viewBox="0 0 108 108" aria-hidden="true">
       {/* фонов track */}
-      <circle cx="54" cy="54" r="48" fill="none" stroke="#F0F0F0" strokeWidth="2.2" />
+      <circle cx="54" cy="54" r="50" fill="none" stroke="#F0F0F0" strokeWidth="2.4" />
       {/* червен прогрес, който се запълва отгоре по часовниковата стрелка */}
       <g transform="rotate(-90 54 54)">
         <circle
-          cx="54" cy="54" r="48"
-          fill="none" stroke="#DC2626" strokeWidth="2.2" strokeLinecap="round"
+          cx="54" cy="54" r="50"
+          fill="none" stroke="#DC2626" strokeWidth="2.4" strokeLinecap="round"
           pathLength="100" strokeDasharray="100"
           className="wz-ring-progress"
           style={{ strokeDashoffset: 100 - pct }}
@@ -277,6 +277,8 @@ export default function ScrollWizard() {
   const next = () => { if (validateStep(current)) go(current + 1) }
   const prev = () => go(current - 1)
   const skip = () => { setStepError(''); go(current + 1) }
+  // Мобилно: на първа стъпка „назад" излиза от формата обратно към интрото
+  const mobileBack = () => { if (current === 0) { setStepError(''); setPhase('intro') } else prev() }
 
   const submit = async () => {
     if (!formData.privacy) {
@@ -334,12 +336,13 @@ export default function ScrollWizard() {
      хваща и промяна на височината — напр. когато се появи броячът „Избрани". */
   useEffect(() => {
     if (phase !== 'wizard' || isSuccess) return
-    const el = contentRef.current
-    if (!el) return
-    const update = () => setMoreBelow(el.scrollHeight - el.scrollTop - el.clientHeight > 8)
+    const els = [contentRef.current, mobileScrollRef.current].filter(Boolean) as HTMLElement[]
+    if (!els.length) return
+    const visible = () => els.find(e => e.offsetParent !== null) || els[0]
+    const update = () => { const el = visible(); setMoreBelow(el.scrollHeight - el.scrollTop - el.clientHeight > 8) }
     update()
     const ro = new ResizeObserver(update)
-    ro.observe(el)
+    els.forEach(el => ro.observe(el))
     return () => ro.disconnect()
   }, [current, phase, isSuccess])
 
@@ -356,7 +359,7 @@ export default function ScrollWizard() {
       role={role}
       aria-checked={selected}
       onClick={onClick}
-      className={`wz-opt w-full min-h-[48px] lg:min-h-[44px] px-5 lg:px-6 py-3 rounded-full border-2 flex items-center gap-3 text-sm lg:text-base font-semibold leading-snug text-left transition-all duration-200 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#DC2626] ${
+      className={`wz-opt w-full min-h-[48px] lg:min-h-[40px] px-5 lg:px-6 py-3 lg:py-1.5 rounded-full border-2 flex items-center gap-3 text-sm lg:text-base font-semibold leading-snug text-left transition-all duration-200 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#DC2626] ${
         selected
           ? 'bg-[#DC2626] border-[#DC2626] text-white shadow-[0_4px_14px_rgba(220,38,38,0.25)]'
           : 'border-[#E5E5E5] bg-white text-[#1A1A1A]/85 hover:border-[#DC2626] hover:bg-[#FFF5F5] hover:translate-x-1 hover:shadow-[0_2px_10px_rgba(220,38,38,0.08)]'
@@ -380,7 +383,7 @@ export default function ScrollWizard() {
       </div>
 
       {q.type === 'radio' && q.options && (
-        <div role="radiogroup" aria-label={q.title} className="flex flex-col gap-2.5 w-full">
+        <div role="radiogroup" aria-label={q.title} className="flex flex-col gap-2.5 lg:gap-2 w-full">
           {q.options.map(opt => (
             <OptionButton key={opt} opt={opt} role="radio" selected={formData[q.id] === opt}
               onClick={() => { setValue(q.id, opt); window.setTimeout(() => go(current + 1), 280) }} />
@@ -390,7 +393,7 @@ export default function ScrollWizard() {
 
       {q.type === 'checkbox' && q.options && (
         <div className="w-full">
-          <div role="group" aria-label={q.title} className="flex flex-col gap-2.5 w-full">
+          <div role="group" aria-label={q.title} className="flex flex-col gap-2.5 lg:gap-2 w-full">
             {q.options.map(opt => (
               <OptionButton key={opt} opt={opt} role="checkbox" selected={((formData[q.id] as string[]) || []).includes(opt)}
                 onClick={() => toggleCheckbox(q.id, opt)} />
@@ -646,110 +649,127 @@ export default function ScrollWizard() {
 
   /* ─── Wizard: лява колона с ясни състояния + кръг с ring progress ─── */
   return (
-    <div ref={rootRef} className="bg-white min-h-[92vh] supports-[height:100svh]:min-h-[92svh] py-8 lg:py-12 overflow-x-clip">
-      <div className="section-padding">
-        <div className="container-max">
-          {/* Мобилен stepper: номерирани кръгчета, свързани с линия */}
-          <div className="lg:hidden mb-6" role="list" aria-label="Стъпки на запитването">
-            <div className="flex items-center">
-              {questions.map((sq, i) => (
-                <div key={sq.id} role="listitem" aria-current={i === current ? 'step' : undefined} className={`flex items-center ${i < questions.length - 1 ? 'flex-1' : ''}`}>
-                  <button
-                    type="button"
-                    onClick={() => { if (i < current) go(i) }}
-                    aria-label={`Стъпка ${i + 1}: ${sq.short}`}
-                    className={`w-7 h-7 rounded-full border-2 flex items-center justify-center text-[11px] font-semibold shrink-0 transition-colors duration-300 ${
-                      i < current ? 'bg-[#DC2626] border-[#DC2626] text-white'
-                      : i === current ? 'bg-[#DC2626] border-[#DC2626] text-white shadow-[0_0_0_3px_rgba(220,38,38,0.15)]'
-                      : 'bg-white border-[#E5E5E5] text-[#1A1A1A]/45'
-                    }`}
-                  >
-                    {i < current
-                      ? <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="3.5"><polyline points="20 6 9 17 4 12" /></svg>
-                      : i + 1}
-                  </button>
-                  {i < questions.length - 1 && <span className={`h-0.5 flex-1 mx-1 transition-colors duration-300 ${i < current ? 'bg-[#DC2626]' : 'bg-[#E5E5E5]'}`} />}
+    <div ref={rootRef}>
+      {/* ─── DESKTOP: лява колона с ясни състояния + кръг с ring progress ─── */}
+      <div className="hidden lg:block bg-white min-h-[92vh] supports-[height:100svh]:min-h-[92svh] py-12 overflow-x-clip">
+        <div className="section-padding">
+          <div className="container-max">
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 items-center">
+              {/* Лява колона: всички стъпки с ясни състояния */}
+              <aside className="lg:col-span-4">
+                <ol className="flex flex-col gap-5">
+                  {questions.map((sq, i) => {
+                    const done = i < current
+                    const active = i === current
+                    return (
+                      <li key={sq.id}>
+                        <button
+                          type="button"
+                          onClick={() => { if (done) go(i) }}
+                          disabled={!done && !active}
+                          aria-current={active ? 'step' : undefined}
+                          className={`group flex items-baseline gap-2.5 text-left transition-colors duration-200 py-0.5 ${done ? 'cursor-pointer' : 'cursor-default'}`}
+                        >
+                          <span className={`text-xs font-mono font-bold w-7 shrink-0 ${active ? 'text-[#DC2626]' : 'text-[#1A1A1A]/50'}`}>{String(i + 1).padStart(2, '0')}</span>
+                          <span className={`leading-snug transition-colors duration-200 ${
+                            active ? 'text-[#DC2626] text-lg font-bold'
+                            : done ? 'text-[#1A1A1A]/70 text-base font-medium group-hover:text-[#DC2626] group-hover:underline underline-offset-4'
+                            : 'text-[#1A1A1A]/50 text-base font-normal'
+                          }`}>
+                            {active && <span className="inline-block w-2 h-2 rounded-full bg-[#DC2626] mr-2 align-middle" aria-hidden="true" />}
+                            {sq.title}
+                          </span>
+                        </button>
+                      </li>
+                    )
+                  })}
+                </ol>
+                <div className="mt-10 text-xs font-light text-[#1A1A1A]/65">
+                  Предпочитате директно? <a href="mailto:adsjustpablo@gmail.com" className="text-[#DC2626] hover:underline py-1">adsjustpablo@gmail.com</a>
                 </div>
-              ))}
+              </aside>
+
+              {/* Кръгът: ring progress с точки отвън, зони А/Б/В вътре */}
+              <div className="flex lg:col-span-8 justify-center xl:justify-end">
+                <div className="wz-shake relative w-[min(52vw,780px,88vh)] aspect-square shrink-0">
+                  <ProgressRing current={current} total={questions.length} />
+                  <div className="absolute inset-[6%] rounded-full bg-white border border-[#E5E5E5] shadow-[0_8px_40px_rgba(0,0,0,0.08)]">
+                    <div className="absolute inset-0 flex flex-col items-center justify-between pt-[4%] pb-[3.5%] px-[9%]">
+                      {zoneA}
+                      <div
+                        ref={contentRef}
+                        data-lenis-prevent
+                        onScroll={e => setMoreBelow(e.currentTarget.scrollHeight - e.currentTarget.scrollTop - e.currentTarget.clientHeight > 8)}
+                        className="w-full max-w-[480px] flex-1 min-h-0 flex flex-col items-center gap-3 my-1.5 overflow-y-auto scroll-smooth overscroll-contain [&::-webkit-scrollbar]:hidden [scrollbar-width:none]"
+                        style={moreBelow ? { maskImage: 'linear-gradient(to bottom, #000 calc(100% - 40px), transparent 100%)', WebkitMaskImage: 'linear-gradient(to bottom, #000 calc(100% - 40px), transparent 100%)' } : undefined}
+                      >
+                        {zoneTitle}
+                        {answerArea}
+                        {skipLink}
+                      </div>
+                      {navButtons('desktop')}
+                    </div>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
+        </div>
+      </div>
 
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 items-center">
-            {/* Лява колона: всички стъпки с ясни състояния (desktop) */}
-            <aside className="hidden lg:block lg:col-span-4">
-              <ol className="flex flex-col gap-5">
-                {questions.map((sq, i) => {
-                  const done = i < current
-                  const active = i === current
-                  return (
-                    <li key={sq.id}>
-                      <button
-                        type="button"
-                        onClick={() => { if (done) go(i) }}
-                        disabled={!done && !active}
-                        aria-current={active ? 'step' : undefined}
-                        className={`group flex items-baseline gap-2.5 text-left transition-colors duration-200 py-0.5 ${done ? 'cursor-pointer' : active ? 'cursor-default' : 'cursor-default'}`}
-                      >
-                        <span className={`text-xs font-mono font-bold w-7 shrink-0 ${active ? 'text-[#DC2626]' : 'text-[#1A1A1A]/50'}`}>{String(i + 1).padStart(2, '0')}</span>
-                        <span className={`leading-snug transition-colors duration-200 ${
-                          active ? 'text-[#DC2626] text-lg font-bold'
-                          : done ? 'text-[#1A1A1A]/70 text-base font-medium group-hover:text-[#DC2626] group-hover:underline underline-offset-4'
-                          : 'text-[#1A1A1A]/50 text-base font-normal'
-                        }`}>
-                          {active && <span className="inline-block w-2 h-2 rounded-full bg-[#DC2626] mr-2 align-middle" aria-hidden="true" />}
-                          {sq.title}
-                        </span>
-                      </button>
-                    </li>
-                  )
-                })}
-              </ol>
-              <div className="mt-10 text-xs font-light text-[#1A1A1A]/65">
-                Предпочитате директно? <a href="mailto:adsjustpablo@gmail.com" className="text-[#DC2626] hover:underline py-1">adsjustpablo@gmail.com</a>
-              </div>
-            </aside>
+      {/* ─── MOBILE: цял екран, фокусиран поток (sticky прогрес + винаги-видим CTA) ─── */}
+      <div data-lenis-prevent className="lg:hidden fixed inset-0 z-[70] bg-white flex flex-col">
+        {/* Горна лента: назад + брояч на стъпки + прогрес-лента */}
+        <header className="shrink-0 px-5 pt-[max(env(safe-area-inset-top),18px)] pb-3.5 border-b border-[#F0F0F0]">
+          <div className="flex items-center justify-between gap-3 mb-3">
+            <button
+              type="button"
+              onClick={mobileBack}
+              aria-label={current === 0 ? 'Затвори' : 'Предишна стъпка'}
+              className="w-10 h-10 -ml-1.5 flex items-center justify-center rounded-full text-[#1A1A1A]/70 active:bg-[#F5F5F5] transition-colors"
+            >
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2"><path d="M19 12H5M11 6l-6 6 6 6" strokeLinecap="round" strokeLinejoin="round" /></svg>
+            </button>
+            <span className="text-xs font-semibold uppercase tracking-[0.08em] text-[#1A1A1A]/55">Стъпка {current + 1} от {questions.length}</span>
+            <span className="w-10 shrink-0" aria-hidden="true" />
+          </div>
+          <div className="h-1.5 rounded-full bg-[#F0F0F0] overflow-hidden" role="progressbar" aria-valuemin={1} aria-valuemax={questions.length} aria-valuenow={current + 1}>
+            <div className="h-full rounded-full bg-[#DC2626] transition-[width] duration-500 ease-out" style={{ width: `${((current + 1) / questions.length) * 100}%` }} />
+          </div>
+        </header>
 
-            {/* Кръгът: ring progress с точки отвън, зони А/Б/В вътре (desktop) */}
-            <div className="hidden lg:flex lg:col-span-8 justify-center xl:justify-end">
-              <div className="wz-shake relative w-[min(46vw,640px,78vh)] aspect-square shrink-0">
-                <ProgressRing current={current} total={questions.length} />
-                <div className="absolute inset-[4.5%] rounded-full bg-white border border-[#E5E5E5] shadow-[0_8px_40px_rgba(0,0,0,0.08)]">
-                  <div className="wz-anim absolute inset-0 flex flex-col items-center justify-between pt-[7%] pb-[6%] px-[10%]">
-                    {zoneA}
-                    <div
-                      ref={contentRef}
-                      data-lenis-prevent
-                      onScroll={e => setMoreBelow(e.currentTarget.scrollHeight - e.currentTarget.scrollTop - e.currentTarget.clientHeight > 8)}
-                      className="w-full max-w-[480px] flex-1 min-h-0 flex flex-col items-center gap-4 lg:gap-5 my-2 lg:my-3 overflow-y-auto scroll-smooth overscroll-contain [&::-webkit-scrollbar]:hidden [scrollbar-width:none]"
-                      style={moreBelow ? { maskImage: 'linear-gradient(to bottom, #000 calc(100% - 40px), transparent 100%)', WebkitMaskImage: 'linear-gradient(to bottom, #000 calc(100% - 40px), transparent 100%)' } : undefined}
-                    >
-                      {zoneTitle}
-                      {answerArea}
-                      {skipLink}
-                    </div>
-                    {navButtons('desktop')}
-                  </div>
-                </div>
-              </div>
-            </div>
+        {/* Средна зона: въпрос + отговори — единствената скролваща част */}
+        <div
+          ref={mobileScrollRef}
+          data-lenis-prevent
+          onScroll={e => setMoreBelow(e.currentTarget.scrollHeight - e.currentTarget.scrollTop - e.currentTarget.clientHeight > 8)}
+          className="wz-shake flex-1 min-h-0 overflow-y-auto overscroll-contain px-5 py-7 [&::-webkit-scrollbar]:hidden [scrollbar-width:none]"
+          style={moreBelow ? { maskImage: 'linear-gradient(to bottom, #000 calc(100% - 32px), transparent 100%)', WebkitMaskImage: 'linear-gradient(to bottom, #000 calc(100% - 32px), transparent 100%)' } : undefined}
+        >
+          <div className="max-w-md mx-auto flex flex-col">
+            {zoneTitle}
+            <div className="mt-6">{answerArea}</div>
+            {skipLink}
+          </div>
+        </div>
 
-            {/* Мобилно: заоблена карта вместо кръг — духът на дизайна, повече място */}
-            <div className="lg:hidden">
-              <div className="wz-shake rounded-[24px] border border-[#E5E5E5] bg-white shadow-[0_8px_40px_rgba(0,0,0,0.08)] p-6 min-h-[450px] max-h-[calc(100svh-180px)] flex flex-col">
-                <div ref={mobileScrollRef} data-lenis-prevent className="wz-anim flex flex-col items-center gap-5 flex-1 overflow-y-auto scroll-smooth overscroll-contain [&::-webkit-scrollbar]:hidden [scrollbar-width:none]">
-                  {zoneA}
-                  {zoneTitle}
-                  {answerArea}
-                  {skipLink}
-                  <div className="mt-auto w-full pt-4">
-                    {navButtons('mobile')}
-                  </div>
-                </div>
-              </div>
-              <div className="mt-6 text-xs font-light text-[#1A1A1A]/65 text-center">
-                Предпочитате директно? <a href="mailto:adsjustpablo@gmail.com" className="text-[#DC2626] hover:underline py-1">adsjustpablo@gmail.com</a>
-              </div>
-            </div>
+        {/* Долна лента: винаги видим основен CTA + safe-area */}
+        <div className="shrink-0 px-5 pt-3 pb-[max(env(safe-area-inset-bottom),16px)] border-t border-[#F0F0F0] bg-white">
+          <button
+            type="button"
+            onClick={isReview ? submit : next}
+            disabled={isSubmitting}
+            className="w-full h-14 rounded-2xl bg-[#DC2626] text-white text-lg font-semibold flex items-center justify-center gap-2 active:scale-[0.98] transition-transform duration-200 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#DC2626] disabled:opacity-70 disabled:cursor-not-allowed"
+          >
+            {isSubmitting
+              ? (<><span className="w-5 h-5 border-2 border-white/40 border-t-white rounded-full animate-spin" /> Изпраща се...</>)
+              : isReview ? 'Изпрати запитване' : 'Напред'}
+            {!isSubmitting && (isReview
+              ? <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z" strokeLinecap="round" strokeLinejoin="round" /></svg>
+              : <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M5 12h14M13 6l6 6-6 6" strokeLinecap="round" strokeLinejoin="round" /></svg>)}
+          </button>
+          <div className="mt-2.5 text-center text-[11px] font-light text-[#1A1A1A]/50">
+            Предпочитате директно? <a href="mailto:adsjustpablo@gmail.com" className="text-[#DC2626]">adsjustpablo@gmail.com</a>
           </div>
         </div>
       </div>
