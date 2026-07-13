@@ -61,29 +61,41 @@ function StepGlyph({ step }: { step: number }) {
   )
 }
 
-/* Ring progress + точки по периметъра (около кръга) */
+/* Ring progress: чисти сегменти без точки (по-изчистен външен обръч) */
 function ProgressRing({ current, total }: { current: number; total: number }) {
-  const pct = (current / (total - 1)) * 100
-  const dots = Array.from({ length: total }, (_, i) => {
-    const a = (-90 + (i * 360) / total) * (Math.PI / 180)
-    return { x: 54 + 50 * Math.cos(a), y: 54 + 50 * Math.sin(a), done: i < current, cur: i === current }
-  })
+  const cx = 54
+  const cy = 54
+  const r = 48
+  const segAngle = 360 / total
+  const gap = 4
+  const polar = (deg: number) => ((deg - 90) * Math.PI) / 180
+  const arc = (i: number) => {
+    const start = i * segAngle + gap / 2
+    const end = (i + 1) * segAngle - gap / 2
+    const x1 = cx + r * Math.cos(polar(start))
+    const y1 = cy + r * Math.sin(polar(start))
+    const x2 = cx + r * Math.cos(polar(end))
+    const y2 = cy + r * Math.sin(polar(end))
+    return `M ${x1} ${y1} A ${r} ${r} 0 0 1 ${x2} ${y2}`
+  }
   return (
-    <svg className="absolute inset-0 w-full h-full pointer-events-none -rotate-0" viewBox="0 0 108 108" aria-hidden="true">
-      <circle cx="54" cy="54" r="50" fill="none" stroke="#E5E5E5" strokeWidth="1.1" />
-      <g transform="rotate(-90 54 54)">
-        <circle
-          cx="54" cy="54" r="50" fill="none" stroke="#DC2626" strokeWidth="1.1" strokeLinecap="round"
-          pathLength="100" strokeDasharray="100"
-          className="wz-ring-progress"
-          style={{ strokeDashoffset: 100 - pct }}
-        />
-      </g>
-      {dots.map((d, i) => (
-        <circle key={i} cx={d.x} cy={d.y} r={d.cur ? 3.1 : 2.1}
-          fill={d.done || d.cur ? '#DC2626' : '#FFFFFF'}
-          stroke={d.cur ? '#FFFFFF' : d.done ? '#DC2626' : '#E5E5E5'} strokeWidth={d.cur ? 1.3 : 1} />
-      ))}
+    <svg className="absolute inset-0 w-full h-full pointer-events-none" viewBox="0 0 108 108" aria-hidden="true">
+      <circle cx={cx} cy={cy} r={r} fill="none" stroke="#F0F0F0" strokeWidth="1.6" />
+      {Array.from({ length: total }, (_, i) => {
+        const done = i < current
+        const active = i === current
+        return (
+          <path
+            key={i}
+            d={arc(i)}
+            fill="none"
+            stroke={done || active ? '#DC2626' : '#E5E5E5'}
+            strokeWidth={active ? 2.8 : done ? 2.2 : 1.8}
+            strokeLinecap="round"
+            className="transition-all duration-500 ease-in-out"
+          />
+        )
+      })}
     </svg>
   )
 }
@@ -242,6 +254,21 @@ export default function ScrollWizard() {
   const isReview = q.type === 'review'
 
   /* ─── Валидация: „Напред" винаги е активен; грешката се показва, кръгът трепва ─── */
+  const validateContactField = (id: string, value: unknown) => {
+    let err = ''
+    if (id === 'name' && (!value || !String(value).trim())) err = 'Моля, въведете име и фамилия.'
+    if (id === 'email') {
+      if (!value || !String(value).trim()) err = 'Моля, въведете e-mail адрес.'
+      else if (!emailOk(String(value))) err = 'E-mail адресът не изглежда валиден.'
+    }
+    setFieldErrors(prev => {
+      const next = { ...prev }
+      if (err) next[id] = err
+      else delete next[id]
+      return next
+    })
+  }
+
   const validateStep = (i: number): boolean => {
     const qq = questions[i]
     if (qq.type === 'checkbox' || qq.type === 'radio') {
@@ -286,6 +313,16 @@ export default function ScrollWizard() {
     const el = rootRef.current?.querySelector('.wz-success-face')
     if (el) gsap.fromTo(el, { scale: 1 }, { keyframes: [{ scale: 1.05 }, { scale: 1 }], duration: 0.5, delay: 0.15, ease: 'power1.inOut' })
   }, [isSuccess])
+
+  /* Автоматичен фокус върху първия интерактивен елемент при смяна на стъпка */
+  useEffect(() => {
+    if (phase !== 'wizard' || isSuccess) return
+    const timer = window.setTimeout(() => {
+      const focusable = rootRef.current?.querySelector<HTMLElement>('.wz-opt, input[data-field], input[type="text"], [role="checkbox"]')
+      focusable?.focus()
+    }, 420)
+    return () => window.clearTimeout(timer)
+  }, [current, phase, isSuccess])
 
   const resetAll = () => {
     clearSaved()
@@ -371,10 +408,10 @@ export default function ScrollWizard() {
       )}
 
       {q.type === 'contact' && (
-        <div className="flex flex-col gap-3 lg:gap-4 w-full">
+        <div className="flex flex-col gap-2 lg:gap-3 w-full">
           {contactFields.map((f, i) => (
             <div key={f.id} className="text-left">
-              <label className="block text-[11px] lg:text-xs font-medium text-[#1A1A1A]/70 mb-1 uppercase tracking-wide">
+              <label className="block text-[10px] lg:text-[11px] font-medium text-[#1A1A1A]/70 mb-0.5 uppercase tracking-wide">
                 {f.label}
               </label>
               <input
@@ -382,16 +419,17 @@ export default function ScrollWizard() {
                 data-field={f.id}
                 value={formData[f.id] || ''}
                 onChange={e => setValue(f.id, e.target.value)}
+                onBlur={() => validateContactField(f.id, formData[f.id])}
                 onFocus={e => { if (!finePointer.current) e.target.scrollIntoView({ behavior: 'smooth', block: 'center' }) }}
                 autoFocus={i === 0 && finePointer.current}
                 autoComplete={f.auto}
                 enterKeyHint={f.hint}
                 aria-label={f.label}
                 aria-invalid={Boolean(fieldErrors[f.id])}
-                className={`w-full bg-white border-2 rounded-xl px-3 lg:px-4 py-2.5 lg:py-3 text-sm lg:text-base font-light text-[#1A1A1A] outline-none transition-all duration-200 ${fieldErrors[f.id] ? 'border-[#EF4444] bg-[#FFF5F5]' : 'border-[#E5E5E5] focus:border-[#DC2626] focus:shadow-[0_0_0_3px_rgba(220,38,38,0.1)]'}`}
+                className={`w-full bg-white border-2 rounded-xl px-3 lg:px-4 py-2 lg:py-2.5 text-sm lg:text-base font-light text-[#1A1A1A] outline-none transition-all duration-200 ${fieldErrors[f.id] ? 'border-[#EF4444] bg-[#FFF5F5]' : 'border-[#E5E5E5] focus:border-[#DC2626] focus:shadow-[0_0_0_3px_rgba(220,38,38,0.1)]'}`}
               />
               {fieldErrors[f.id] && (
-                <p className="text-xs font-medium text-[#EF4444] mt-1">⚠ {fieldErrors[f.id]}</p>
+                <p className="text-[11px] font-medium text-[#EF4444] mt-0.5">⚠ {fieldErrors[f.id]}</p>
               )}
             </div>
           ))}
@@ -537,7 +575,7 @@ export default function ScrollWizard() {
     return (
       <div ref={rootRef} className="bg-white min-h-[85vh] supports-[height:100svh]:min-h-[85svh] flex items-center py-14 relative">
         {resume && (
-          <div className="fixed top-5 left-1/2 -translate-x-1/2 z-[80] bg-[#1A1A1A] text-white pl-5 pr-3 py-3 rounded-lg shadow-xl flex items-center gap-4 text-sm max-w-[calc(100vw-32px)]" role="status">
+          <div className="fixed top-24 left-1/2 -translate-x-1/2 z-[80] bg-[#1A1A1A] text-white pl-5 pr-3 py-3 rounded-lg shadow-xl flex items-center gap-4 text-sm max-w-[calc(100vw-32px)]" role="status">
             <span className="font-light">Имате запазен прогрес — стъпка {Math.min((resume.current ?? 0) + 1, questions.length)}.</span>
             <button type="button" onClick={() => { setFormData(resume.formData || {}); setCurrent(Math.min(resume.current ?? 0, questions.length - 1)); setPhase(resume.phase === 'wizard' ? 'wizard' : 'intro'); setResume(null) }} className="shrink-0 bg-[#DC2626] hover:bg-[#B91C1C] px-3.5 py-1.5 rounded-md font-medium transition-colors">Продължи</button>
             <button type="button" onClick={() => { clearSaved(); setResume(null) }} className="shrink-0 text-white/60 hover:text-white px-1 py-1.5 transition-colors">Отначало</button>
@@ -558,8 +596,8 @@ export default function ScrollWizard() {
               <div className="lg:col-span-7 flex justify-center">
                 <div className="relative w-[min(340px,88vw)] md:w-[460px] lg:w-[560px] aspect-square rounded-full border border-[#1A1A1A]/10 flex flex-col items-center justify-center gap-3 px-[11%]">
                   <svg className="absolute inset-0 w-full h-full pointer-events-none" viewBox="0 0 100 100" aria-hidden="true">
-                    <g transform="rotate(35 50 50)">
-                      <circle cx="50" cy="50" r="49.6" fill="none" stroke="#DC2626" strokeWidth="0.9" strokeLinecap="round" pathLength="100" strokeDasharray="10 90" />
+                    <g transform="rotate(25 50 50)">
+                      <circle cx="50" cy="50" r="49.5" fill="none" stroke="#E5E5E5" strokeWidth="0.7" strokeLinecap="round" strokeDasharray="4 7" />
                     </g>
                   </svg>
                   <div className="text-xs font-medium text-[#1A1A1A]/50 mb-2">Натиснете, за да започнете</div>
