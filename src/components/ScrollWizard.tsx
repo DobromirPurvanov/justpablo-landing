@@ -26,11 +26,11 @@ type Question = {
 
 const questions: Question[] = [
   { id: 'brandName', short: 'Дейност', title: 'Каква е дейността на вашата марка?', subtitle: 'Нека се запознаем. Попълването на всички стъпки отнема само минута.', type: 'text', placeholder: 'предмет на дейност' },
-  { id: 'focus', short: 'Фокус', title: 'Какъв е фокусът на вашия бизнес?', subtitle: 'Можете да маркирате повече от един отговор.', type: 'checkbox', options: ['Услуга/и', 'Продукт/и собствено производство', 'Търговия или дистрибуция', 'Друго'], skippable: true },
-  { id: 'goals', short: 'Цели', title: 'Какви са вашите цели за онлайн развитие?', subtitle: 'Можете да маркирате повече от един отговор.', type: 'checkbox', options: ['Разпознаваемост', 'Продажби', 'Абонаменти', 'Подготовка за експанзия', 'Друго'], skippable: true },
-  { id: 'period', short: 'Период', title: 'За какъв период очаквате резултати?', type: 'radio', options: ['3 месеца', '6 месеца', '1 година', '2+ години'] },
-  { id: 'needs', short: 'Услуги', title: 'От какви услуги имате нужда?', subtitle: 'Можете да маркирате повече от един отговор.', type: 'checkbox', options: ['Нов уебсайт', 'SEO и GEO (видимост в AI)', 'Онлайн реклама', 'Брандинг и дизайн', 'Социални мрежи и видео'], skippable: true },
-  { id: 'budget', short: 'Бюджет', title: 'Какъв е предвиденият бюджет?', type: 'radio', options: ['До 500 €', '500 – 1500 €', '1500 – 2500 €', '2500 – 5000 €', 'Над 5000 €'] },
+  { id: 'focus', short: 'Фокус', title: 'Какъв е фокусът на вашия бизнес?', subtitle: 'Натиснете върху опция, за да я изберете — можете да маркирате повече от една.', type: 'checkbox', options: ['Услуга/и', 'Продукт/и собствено производство', 'Търговия или дистрибуция', 'Друго'], skippable: true },
+  { id: 'goals', short: 'Цели', title: 'Какви са вашите цели за онлайн развитие?', subtitle: 'Натиснете върху опция, за да я изберете — можете да маркирате повече от една.', type: 'checkbox', options: ['Разпознаваемост', 'Продажби', 'Абонаменти', 'Подготовка за експанзия', 'Друго'], skippable: true },
+  { id: 'period', short: 'Период', title: 'За какъв период очаквате резултати?', subtitle: 'Натиснете върху един отговор, за да продължите.', type: 'radio', options: ['3 месеца', '6 месеца', '1 година', '2+ години'] },
+  { id: 'needs', short: 'Услуги', title: 'От какви услуги имате нужда?', subtitle: 'Натиснете върху опция, за да я изберете — можете да маркирате повече от една.', type: 'checkbox', options: ['Нов уебсайт', 'SEO и GEO (видимост в AI)', 'Онлайн реклама', 'Брандинг и дизайн', 'Социални мрежи и видео'], skippable: true },
+  { id: 'budget', short: 'Бюджет', title: 'Какъв е предвиденият бюджет?', subtitle: 'Натиснете върху един отговор, за да продължите.', type: 'radio', options: ['До 500 €', '500 – 1500 €', '1500 – 2500 €', '2500 – 5000 €', 'Над 5000 €'] },
   { id: 'contact', short: 'Контакт', title: 'Информация за контакт', subtitle: 'Ще се свържем с вас в рамките на 24 часа.', type: 'contact' },
   { id: 'review', short: 'Преглед', title: 'Прегледайте и изпратете', subtitle: 'Проверете отговорите си — всяка стъпка може да се редактира.', type: 'review' },
 ]
@@ -66,7 +66,7 @@ function ProgressRing({ current, total }: { current: number; total: number }) {
   const pct = (current / (total - 1)) * 100
   const dots = Array.from({ length: total }, (_, i) => {
     const a = (-90 + (i * 360) / total) * (Math.PI / 180)
-    return { x: 54 + 50 * Math.cos(a), y: 54 + 50 * Math.sin(a), done: i <= current }
+    return { x: 54 + 50 * Math.cos(a), y: 54 + 50 * Math.sin(a), done: i < current, cur: i === current }
   })
   return (
     <svg className="absolute inset-0 w-full h-full pointer-events-none -rotate-0" viewBox="0 0 108 108" aria-hidden="true">
@@ -80,9 +80,9 @@ function ProgressRing({ current, total }: { current: number; total: number }) {
         />
       </g>
       {dots.map((d, i) => (
-        <circle key={i} cx={d.x} cy={d.y} r="2.1"
-          fill={d.done ? '#DC2626' : '#FFFFFF'}
-          stroke={d.done ? '#DC2626' : '#E5E5E5'} strokeWidth="1" />
+        <circle key={i} cx={d.x} cy={d.y} r={d.cur ? 3.1 : 2.1}
+          fill={d.done || d.cur ? '#DC2626' : '#FFFFFF'}
+          stroke={d.cur ? '#FFFFFF' : d.done ? '#DC2626' : '#E5E5E5'} strokeWidth={d.cur ? 1.3 : 1} />
       ))}
     </svg>
   )
@@ -191,7 +191,25 @@ export default function ScrollWizard() {
     if (prefersReduced()) return
     const targets = gsap.utils.toArray<HTMLElement>('.wz-shake', rootRef.current)
     if (targets.length) gsap.fromTo(targets, { x: 0 }, { keyframes: [{ x: -5 }, { x: 5 }, { x: -4 }, { x: 0 }], duration: 0.3, ease: 'power1.inOut' })
+    // Първата опция пулсира — „ето тук се натиска"
+    const firsts = rootRef.current?.querySelectorAll('[role="radiogroup"] > .wz-opt:first-of-type, [role="group"] > .wz-opt:first-of-type')
+    if (firsts?.length) gsap.fromTo(firsts, { scale: 1 }, { keyframes: [{ scale: 1.02 }, { scale: 1 }], duration: 0.3, repeat: 2, ease: 'power1.inOut' })
   }
+
+  /* Мек пулс на първата опция при зареждане на неотговорена изборна стъпка */
+  useEffect(() => {
+    if (phase !== 'wizard' || isSuccess || prefersReduced()) return
+    const qq = questions[current]
+    if ((qq.type !== 'radio' && qq.type !== 'checkbox') || isAnswered(formData, qq.id)) return
+    const firsts = rootRef.current?.querySelectorAll('[role="radiogroup"] > .wz-opt:first-of-type, [role="group"] > .wz-opt:first-of-type')
+    if (!firsts?.length) return
+    const tween = gsap.fromTo(firsts,
+      { boxShadow: '0 0 0 0 rgba(220,38,38,0.35)' },
+      { boxShadow: '0 0 0 9px rgba(220,38,38,0)', duration: 1, repeat: 1, delay: 0.55, ease: 'power2.out', clearProps: 'boxShadow' }
+    )
+    return () => { tween.kill() }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [current, phase, isSuccess])
 
   const startWizard = (brandType: string) => {
     setValue('brandType', brandType)
@@ -210,11 +228,12 @@ export default function ScrollWizard() {
     const items = gsap.utils.toArray<HTMLElement>('.wz-anim', rootRef.current)
     if (!items.length || prefersReduced()) { setCurrent(target); return }
     animating.current = true
-    gsap.to(items, { opacity: 0, scale: 0.95, duration: 0.25, ease: 'power2.in', onComplete: () => {
+    const dir = target > current ? 1 : -1
+    gsap.to(items, { opacity: 0, x: -20 * dir, duration: 0.25, ease: 'power2.in', onComplete: () => {
       setCurrent(target)
       requestAnimationFrame(() => {
         const fresh = gsap.utils.toArray<HTMLElement>('.wz-anim', rootRef.current)
-        gsap.fromTo(fresh, { opacity: 0, scale: 0.95 }, { opacity: 1, scale: 1, duration: 0.35, delay: 0.1, ease: 'power3.out', clearProps: 'transform', onComplete: () => { animating.current = false } })
+        gsap.fromTo(fresh, { opacity: 0, x: 20 * dir }, { opacity: 1, x: 0, duration: 0.35, delay: 0.1, ease: 'power3.out', clearProps: 'transform', onComplete: () => { animating.current = false } })
       })
     }})
   }
@@ -262,6 +281,12 @@ export default function ScrollWizard() {
     setIsSuccess(true)
   }
 
+  useEffect(() => {
+    if (!isSuccess || prefersReduced()) return
+    const el = rootRef.current?.querySelector('.wz-success-face')
+    if (el) gsap.fromTo(el, { scale: 1 }, { keyframes: [{ scale: 1.05 }, { scale: 1 }], duration: 0.5, delay: 0.15, ease: 'power1.inOut' })
+  }, [isSuccess])
+
   const resetAll = () => {
     clearSaved()
     setFormData({}); setFieldErrors({}); setStepError('')
@@ -275,24 +300,34 @@ export default function ScrollWizard() {
       role={role}
       aria-checked={selected}
       onClick={onClick}
-      className={`w-full min-h-[48px] px-4 py-3 rounded-[10px] border-2 flex items-center justify-center gap-3 text-[15px] font-medium leading-snug transition-all duration-200 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#DC2626] ${
+      className={`wz-opt w-full min-h-[56px] lg:min-h-[52px] px-[18px] py-3.5 rounded-xl border-2 flex items-center gap-3 text-base lg:text-[15px] font-medium leading-snug text-left transition-all duration-200 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#DC2626] ${
         selected
-          ? 'border-[#DC2626] bg-[#FFF5F5] text-[#1A1A1A] shadow-[0_0_0_3px_rgba(220,38,38,0.1)]'
-          : 'border-[#E5E5E5] bg-white text-[#1A1A1A]/80 hover:border-[#DC2626] hover:bg-[#FFF5F5]'
+          ? 'border-[#DC2626] border-l-4 bg-[#FFF5F5] text-[#1A1A1A] shadow-[0_0_0_3px_rgba(220,38,38,0.1)]'
+          : 'border-[#E5E5E5] bg-white text-[#1A1A1A]/80 hover:border-[#DC2626] hover:bg-[#FFF5F5] hover:translate-x-1 hover:shadow-[0_2px_8px_rgba(220,38,38,0.08)]'
       }`}
     >
-      <span className={`shrink-0 flex items-center justify-center transition-colors duration-200 ${role === 'checkbox' ? 'w-5 h-5 rounded-[5px] border-2' : 'w-5 h-5 rounded-full border-2'} ${selected ? 'bg-[#DC2626] border-[#DC2626]' : 'border-[#1A1A1A]/25 bg-white'}`}>
+      <span className={`shrink-0 flex items-center justify-center transition-colors duration-200 ${role === 'checkbox' ? 'w-[22px] h-[22px] rounded-md border-2' : 'w-[22px] h-[22px] rounded-full border-2'} ${selected ? 'bg-[#DC2626] border-[#DC2626]' : 'border-[#D1D1D1] bg-white'}`}>
         {selected && (role === 'checkbox'
-          ? <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="3.5"><polyline points="20 6 9 17 4 12" /></svg>
-          : <span className="w-1.5 h-1.5 rounded-full bg-white" />)}
+          ? <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="3.5"><polyline points="20 6 9 17 4 12" /></svg>
+          : <span className="w-2 h-2 rounded-full bg-white" />)}
       </span>
-      <span className="text-left">{opt}</span>
+      <span className="flex-1">{opt}</span>
+      {selected && (
+        <span className="shrink-0 w-6 h-6 rounded-full bg-[#DC2626] flex items-center justify-center" aria-hidden="true">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="3.5"><polyline points="20 6 9 17 4 12" /></svg>
+        </span>
+      )}
     </button>
   )
 
   /* ─── Зона Б: съдържанието на активната стъпка ─── */
   const answerArea = (
     <div className="w-full">
+      {/* Грешка на стъпката — над опциите, aria-live за скрийнрийдъри */}
+      <div aria-live="polite" className={stepError ? 'mb-3' : ''}>
+        {stepError && <p className="text-sm font-semibold text-[#EF4444] text-center">⚠ {stepError}</p>}
+      </div>
+
       {q.type === 'radio' && q.options && (
         <div role="radiogroup" aria-label={q.title} className="flex flex-col gap-3 w-full">
           {q.options.map(opt => (
@@ -303,11 +338,18 @@ export default function ScrollWizard() {
       )}
 
       {q.type === 'checkbox' && q.options && (
-        <div role="group" aria-label={q.title} className="flex flex-col gap-3 w-full">
-          {q.options.map(opt => (
-            <OptionButton key={opt} opt={opt} role="checkbox" selected={((formData[q.id] as string[]) || []).includes(opt)}
-              onClick={() => toggleCheckbox(q.id, opt)} />
-          ))}
+        <div className="w-full">
+          <div role="group" aria-label={q.title} className="flex flex-col gap-3 w-full">
+            {q.options.map(opt => (
+              <OptionButton key={opt} opt={opt} role="checkbox" selected={((formData[q.id] as string[]) || []).includes(opt)}
+                onClick={() => toggleCheckbox(q.id, opt)} />
+            ))}
+          </div>
+          {((formData[q.id] as string[]) || []).length > 0 && (
+            <div className="text-sm font-semibold text-[#DC2626] text-center mt-3" aria-live="polite">
+              Избрани: {((formData[q.id] as string[]) || []).length} от {q.options.length}
+            </div>
+          )}
         </div>
       )}
 
@@ -388,10 +430,6 @@ export default function ScrollWizard() {
         </div>
       )}
 
-      {/* Грешка на стъпката — aria-live за скрийнрийдъри */}
-      <div aria-live="polite" className="min-h-[20px] mt-4">
-        {stepError && <p className="text-sm font-medium text-[#EF4444] text-center">⚠ {stepError}</p>}
-      </div>
     </div>
   )
 
@@ -415,7 +453,7 @@ export default function ScrollWizard() {
         onClick={prev}
         disabled={current === 0}
         aria-label="Предишна стъпка"
-        className={`${variant === 'desktop' ? 'w-[120px] h-12' : 'w-full h-12 rounded-xl'} ${variant === 'desktop' ? 'rounded-full' : ''} border-2 border-[#E5E5E5] bg-white text-sm font-medium text-[#1A1A1A]/60 flex items-center justify-center gap-2 transition-all duration-200 ${current === 0 ? 'opacity-40 cursor-not-allowed' : 'hover:border-[#1A1A1A]/30 hover:text-[#1A1A1A] hover:bg-[#F5F5F5] active:scale-[0.98]'} focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#DC2626]`}
+        className={`${variant === 'desktop' ? 'w-[120px] h-12' : 'w-full h-12 rounded-xl'} ${variant === 'desktop' ? 'rounded-full' : ''} border-2 border-[#E5E5E5] bg-white text-sm font-medium text-[#1A1A1A]/60 flex items-center justify-center gap-2 transition-all duration-200 ${current === 0 ? 'opacity-40 cursor-not-allowed' : 'hover:border-[#1A1A1A]/30 hover:text-[#1A1A1A] hover:bg-[#F5F5F5] hover:-translate-y-px active:translate-y-0 active:scale-[0.98]'} focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#DC2626]`}
       >
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M19 12H5M11 6l-6 6 6 6" strokeLinecap="round" strokeLinejoin="round" /></svg>
         Назад
@@ -445,7 +483,9 @@ export default function ScrollWizard() {
   const zoneA = (
     <div className="flex flex-col items-center gap-2">
       <StepGlyph step={current} />
-      <div className="text-sm font-medium text-[#1A1A1A]/60">Стъпка {current + 1} от {questions.length}</div>
+      <div className="inline-flex items-center bg-[#F5F5F5] text-[#1A1A1A]/60 px-3 py-1 rounded-full text-xs font-semibold uppercase tracking-[0.05em]">
+        Стъпка {current + 1} от {questions.length}
+      </div>
     </div>
   )
 
@@ -461,7 +501,7 @@ export default function ScrollWizard() {
     return (
       <div ref={rootRef} className="min-h-[80vh] supports-[height:100svh]:min-h-[80svh] flex flex-col items-center justify-center text-center bg-white section-padding py-16">
         <ConfettiBurst />
-        <div className="w-32 lg:w-40 mb-10" aria-hidden="true">
+        <div className="wz-success-face w-32 lg:w-40 mb-10" aria-hidden="true">
           <LogoFace />
         </div>
         <h1 className="wz-h1 font-thin-display text-[clamp(40px,7vw,84px)] text-[#1A1A1A] leading-none mb-6">Благодарим!</h1>
@@ -584,7 +624,7 @@ export default function ScrollWizard() {
                         aria-current={active ? 'step' : undefined}
                         className={`group flex items-baseline gap-2.5 text-left transition-colors duration-200 py-0.5 ${done ? 'cursor-pointer' : active ? 'cursor-default' : 'cursor-default'}`}
                       >
-                        <span className={`text-xs font-semibold w-7 shrink-0 ${active ? 'text-[#DC2626]' : 'text-[#1A1A1A]/40'}`}>{String(i + 1).padStart(2, '0')}.</span>
+                        <span className={`text-xs font-mono font-bold w-7 shrink-0 ${active ? 'text-[#DC2626]' : 'text-[#1A1A1A]/40'}`}>{String(i + 1).padStart(2, '0')}</span>
                         <span className={`leading-snug transition-colors duration-200 ${
                           active ? 'text-[#DC2626] text-lg font-bold'
                           : done ? 'text-[#1A1A1A]/65 text-base font-medium group-hover:text-[#DC2626] group-hover:underline underline-offset-4'
