@@ -2,6 +2,7 @@ import { useEffect, useRef } from 'react'
 import gsap from 'gsap'
 import { ScrollTrigger } from 'gsap/ScrollTrigger'
 import LogoFace from '../components/LogoFace'
+import PromoCountdown from '../components/PromoCountdown'
 import { scrollToId } from '../lib/scroll'
 
 gsap.registerPlugin(ScrollTrigger)
@@ -74,6 +75,8 @@ export default function LandingHero() {
           <p className="hero-sub mt-8 text-base lg:text-lg font-light text-[#1A1A1A]/60 max-w-md leading-relaxed">
             Агенцията, изградена върху най-голямата инфлуенсър платформа в България. Данни в реално време, native подход и резултати, които се броят.
           </p>
+
+          <PromoCountdown className="mt-8" />
 
           <div className="flex flex-col sm:flex-row sm:flex-wrap items-stretch sm:items-center gap-4 mt-10">
             <button
