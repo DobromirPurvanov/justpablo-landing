@@ -461,7 +461,7 @@ export default function ScrollWizard() {
                   : Array.isArray(formData[rq.id]) ? (formData[rq.id] as string[]).join(', ') : formData[rq.id],
                 edit: () => go(i),
               }))].map(row => (
-              <li key={row.short} className="flex items-baseline justify-between gap-3 text-xs lg:text-sm border-b border-[#E5E5E5] pb-1.5 lg:pb-1">
+              <li key={row.short} className="flex items-baseline justify-between gap-3 text-xs lg:text-sm border-b border-[#E5E5E5] pb-1.5 lg:pb-0.5">
                 <span className="shrink-0 font-medium text-[#1A1A1A]/60">{row.short}</span>
                 <span className="text-right text-[#1A1A1A] font-light truncate">{row.val || '—'}</span>
                 <button type="button" onClick={row.edit} className="shrink-0 text-[11px] text-[#DC2626] underline underline-offset-2 hover:no-underline py-1">Редактирай</button>
@@ -490,7 +490,7 @@ export default function ScrollWizard() {
 
   /* ─── Зона В: навигационни pill бутони — хоризонтални, вътре в кръга/картата ─── */
   const navButtons = (variant: 'desktop' | 'mobile') => (
-    <div className={variant === 'desktop' ? 'flex items-center justify-center gap-4' : 'flex flex-col gap-3 w-full'}>
+    <div className={variant === 'desktop' ? 'flex items-center justify-center gap-3' : 'flex flex-col gap-3 w-full'}>
       {variant === 'mobile' && (
         <button
           type="button"
@@ -511,7 +511,7 @@ export default function ScrollWizard() {
         onClick={prev}
         disabled={current === 0}
         aria-label="Предишна стъпка"
-        className={`${variant === 'desktop' ? 'w-[120px] h-12' : 'w-full h-12 rounded-xl'} ${variant === 'desktop' ? 'rounded-full' : ''} border-2 border-[#E5E5E5] bg-white text-sm font-medium text-[#1A1A1A]/60 flex items-center justify-center gap-2 transition-all duration-200 ${current === 0 ? 'opacity-40 cursor-not-allowed' : 'hover:border-[#1A1A1A]/30 hover:text-[#1A1A1A] hover:bg-[#F5F5F5] hover:-translate-y-px active:translate-y-0 active:scale-[0.98]'} focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#DC2626]`}
+        className={`${variant === 'desktop' ? 'w-[104px] h-12' : 'w-full h-12 rounded-xl'} ${variant === 'desktop' ? 'rounded-full' : ''} border-2 border-[#E5E5E5] bg-white text-sm font-medium text-[#1A1A1A]/60 flex items-center justify-center gap-2 transition-all duration-200 ${current === 0 ? 'opacity-40 cursor-not-allowed' : 'hover:border-[#1A1A1A]/30 hover:text-[#1A1A1A] hover:bg-[#F5F5F5] hover:-translate-y-px active:translate-y-0 active:scale-[0.98]'} focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#DC2626]`}
       >
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M19 12H5M11 6l-6 6 6 6" strokeLinecap="round" strokeLinejoin="round" /></svg>
         Назад
@@ -521,11 +521,11 @@ export default function ScrollWizard() {
           type="button"
           onClick={isReview ? submit : next}
           disabled={isSubmitting}
-          className={`${isReview ? 'min-w-[200px] h-[52px] text-lg font-bold px-6' : 'w-[160px] h-12 text-base font-semibold'} rounded-full bg-[#DC2626] text-white flex items-center justify-center gap-2 hover:bg-[#B91C1C] hover:-translate-y-0.5 hover:shadow-[0_4px_12px_rgba(220,38,38,0.3)] active:translate-y-0 active:shadow-none transition-all duration-200 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#DC2626] disabled:opacity-70 disabled:cursor-not-allowed disabled:hover:translate-y-0`}
+          className={`${isReview ? 'h-12 text-sm font-bold px-5' : 'w-[142px] h-12 text-base font-semibold'} rounded-full bg-[#DC2626] text-white flex items-center justify-center gap-2 hover:bg-[#B91C1C] hover:-translate-y-0.5 hover:shadow-[0_4px_12px_rgba(220,38,38,0.3)] active:translate-y-0 active:shadow-none transition-all duration-200 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#DC2626] disabled:opacity-70 disabled:cursor-not-allowed disabled:hover:translate-y-0`}
         >
           {isSubmitting
             ? (<><span className="w-5 h-5 border-2 border-white/40 border-t-white rounded-full animate-spin" /> Изпраща се...</>)
-            : isReview ? 'Изпрати запитване' : 'Напред'}
+            : isReview ? 'Изпрати' : 'Напред'}
           {!isSubmitting && (isReview
             ? <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z" strokeLinecap="round" strokeLinejoin="round" /></svg>
             : <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M5 12h14M13 6l6 6-6 6" strokeLinecap="round" strokeLinejoin="round" /></svg>)}
@@ -550,10 +550,13 @@ export default function ScrollWizard() {
     </div>
   )
 
+  // На десктоп: щом има избрана опция (checkbox), броячът „Избрани: X от Y" заема
+  // мястото на подзаглавието — така маркирането не добавя височина и кръгът не „прелива".
+  const hideSubtitleDesktop = isReview || (q.type === 'checkbox' && ((formData[q.id] as string[]) || []).length > 0)
   const zoneTitle = (
     <div className="text-center px-2">
       <h2 className="text-lg lg:text-[clamp(18px,1.6vw,24px)] font-bold text-[#1A1A1A] leading-tight max-w-[95%] mx-auto">{q.title}</h2>
-      {q.subtitle && <p className={`text-xs lg:text-sm font-light text-[#1A1A1A]/60 mt-1.5 lg:mt-2 leading-relaxed max-w-sm mx-auto ${isReview ? 'lg:hidden' : ''}`}>{q.subtitle}</p>}
+      {q.subtitle && <p className={`text-xs lg:text-sm font-light text-[#1A1A1A]/60 mt-1.5 lg:mt-2 leading-relaxed max-w-sm mx-auto ${hideSubtitleDesktop ? 'lg:hidden' : ''}`}>{q.subtitle}</p>}
     </div>
   )
 
@@ -695,13 +698,13 @@ export default function ScrollWizard() {
                 <div className="wz-shake relative w-[min(52vw,780px,92vh)] aspect-square shrink-0">
                   <ProgressRing current={current} total={questions.length} />
                   <div className="absolute inset-[6%] rounded-full bg-white border border-[#E5E5E5] shadow-[0_8px_40px_rgba(0,0,0,0.08)]">
-                    <div className="absolute inset-0 flex flex-col items-center justify-between pt-[4%] pb-[3.5%] px-[9%]">
+                    <div className="absolute inset-0 flex flex-col items-center justify-between pt-[5%] pb-[7%] px-[10%]">
                       {zoneA}
                       <div
                         ref={contentRef}
                         data-lenis-prevent
                         onScroll={e => setMoreBelow(e.currentTarget.scrollHeight - e.currentTarget.scrollTop - e.currentTarget.clientHeight > 8)}
-                        className="w-full max-w-[480px] flex-1 min-h-0 flex flex-col items-center gap-3 my-1.5 overflow-y-auto scroll-smooth overscroll-contain [&::-webkit-scrollbar]:hidden [scrollbar-width:none]"
+                        className="w-full max-w-[480px] flex-1 min-h-0 flex flex-col items-center gap-3 my-0.5 overflow-y-auto scroll-smooth overscroll-contain [&::-webkit-scrollbar]:hidden [scrollbar-width:none]"
                         style={moreBelow ? { maskImage: 'linear-gradient(to bottom, #000 calc(100% - 40px), transparent 100%)', WebkitMaskImage: 'linear-gradient(to bottom, #000 calc(100% - 40px), transparent 100%)' } : undefined}
                       >
                         {zoneTitle}
