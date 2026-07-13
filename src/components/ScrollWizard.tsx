@@ -300,10 +300,10 @@ export default function ScrollWizard() {
       role={role}
       aria-checked={selected}
       onClick={onClick}
-      className={`wz-opt w-full min-h-[56px] lg:min-h-[52px] px-[18px] py-3.5 rounded-xl border-2 flex items-center gap-3 text-base lg:text-[15px] font-medium leading-snug text-left transition-all duration-200 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#DC2626] ${
+      className={`wz-opt w-full min-h-[56px] lg:min-h-[52px] px-5 py-3.5 rounded-xl border-2 flex items-center gap-3 text-base font-semibold leading-snug text-left transition-all duration-200 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#DC2626] ${
         selected
           ? 'border-[#DC2626] border-l-4 bg-[#FFF5F5] text-[#1A1A1A] shadow-[0_0_0_3px_rgba(220,38,38,0.1)]'
-          : 'border-[#E5E5E5] bg-white text-[#1A1A1A]/80 hover:border-[#DC2626] hover:bg-[#FFF5F5] hover:translate-x-1 hover:shadow-[0_2px_8px_rgba(220,38,38,0.08)]'
+          : 'border-[#E5E5E5] bg-white text-[#1A1A1A]/80 hover:border-[#DC2626] hover:bg-[#FFF5F5] hover:translate-x-1.5 hover:shadow-[0_2px_8px_rgba(220,38,38,0.08)]'
       }`}
     >
       <span className={`shrink-0 flex items-center justify-center transition-colors duration-200 ${role === 'checkbox' ? 'w-[22px] h-[22px] rounded-md border-2' : 'w-[22px] h-[22px] rounded-full border-2'} ${selected ? 'bg-[#DC2626] border-[#DC2626]' : 'border-[#D1D1D1] bg-white'}`}>
@@ -462,7 +462,7 @@ export default function ScrollWizard() {
         <button
           type="button"
           onClick={isReview ? submit : next}
-          className={`${isReview ? 'w-[200px] h-[52px]' : 'w-[160px] h-12'} rounded-full bg-[#DC2626] text-white text-base font-semibold flex items-center justify-center gap-2 hover:bg-[#B91C1C] hover:-translate-y-0.5 hover:shadow-[0_4px_12px_rgba(220,38,38,0.3)] active:translate-y-0 active:shadow-none transition-all duration-200 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#DC2626]`}
+          className={`${isReview ? 'min-w-[200px] h-[52px] text-lg font-bold px-6' : 'w-[160px] h-12 text-base font-semibold'} rounded-full bg-[#DC2626] text-white flex items-center justify-center gap-2 hover:bg-[#B91C1C] hover:-translate-y-0.5 hover:shadow-[0_4px_12px_rgba(220,38,38,0.3)] active:translate-y-0 active:shadow-none transition-all duration-200 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#DC2626]`}
         >
           {isReview ? 'Изпрати запитване' : 'Напред'}
           {isReview
@@ -553,20 +553,26 @@ export default function ScrollWizard() {
                 </div>
               </div>
               <div className="lg:col-span-7 flex justify-center">
-                <div className="relative w-[min(300px,84vw)] md:w-[440px] lg:w-[560px] aspect-square rounded-full border border-[#1A1A1A]/10 flex flex-col items-center justify-center gap-6 px-8">
+                <div className="relative w-[min(340px,88vw)] md:w-[460px] lg:w-[560px] aspect-square rounded-full border border-[#1A1A1A]/10 flex flex-col items-center justify-center gap-3 px-[11%]">
                   <svg className="absolute inset-0 w-full h-full pointer-events-none" viewBox="0 0 100 100" aria-hidden="true">
                     <g transform="rotate(35 50 50)">
                       <circle cx="50" cy="50" r="49.6" fill="none" stroke="#DC2626" strokeWidth="0.9" strokeLinecap="round" pathLength="100" strokeDasharray="10 90" />
                     </g>
                   </svg>
+                  <div className="text-xs font-medium text-[#1A1A1A]/50 mb-2">Натиснете, за да започнете</div>
                   {['Съществуващ бранд', 'Стартиращ бранд', 'Личен проект / Инфлуенсър'].map(opt => (
-                    <button key={opt} type="button" onClick={() => startWizard(opt)} className="group flex items-center gap-3 py-2 min-h-[44px] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#DC2626] rounded">
-                      <span className="opacity-0 -translate-x-2 group-hover:opacity-100 group-hover:translate-x-0 transition-all duration-300">
-                        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#DC2626" strokeWidth="3">
+                    <button
+                      key={opt}
+                      type="button"
+                      onClick={() => startWizard(opt)}
+                      className="group w-full max-w-[340px] min-h-[56px] lg:min-h-[52px] px-5 py-3.5 rounded-xl border-2 border-[#E5E5E5] bg-white flex items-center gap-3 text-base font-semibold text-[#1A1A1A] leading-snug text-left transition-all duration-200 hover:border-[#DC2626] hover:bg-[#FFF5F5] hover:translate-x-1.5 hover:shadow-[0_2px_8px_rgba(220,38,38,0.08)] active:scale-[0.99] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#DC2626]"
+                    >
+                      <span className="flex-1">{opt}</span>
+                      <span className="shrink-0 opacity-40 group-hover:opacity-100 group-hover:translate-x-1 transition-all duration-200">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#DC2626" strokeWidth="2.5">
                           <path d="M5 12h14M13 6l6 6-6 6" strokeLinecap="round" strokeLinejoin="round" />
                         </svg>
                       </span>
-                      <span className="text-lg lg:text-2xl font-bold text-[#1A1A1A] group-hover:text-[#DC2626] transition-colors duration-300 text-center">{opt}</span>
                     </button>
                   ))}
                 </div>
