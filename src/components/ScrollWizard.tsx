@@ -143,7 +143,6 @@ export default function ScrollWizard() {
   const [resume, setResume] = useState<{ formData: Record<string, any>; current: number; phase: 'intro' | 'wizard' } | null>(null)
   const rootRef = useRef<HTMLDivElement>(null)
   const contentRef = useRef<HTMLDivElement>(null)
-  const animating = useRef(false)
   // На touch устройства не отваряме клавиатурата насила при смяна на стъпка
   const finePointer = useRef(typeof window !== 'undefined' && window.matchMedia('(pointer: fine)').matches)
 
@@ -217,21 +216,11 @@ export default function ScrollWizard() {
     }})
   }
 
-  /* Смяна на стъпка: изходяща scale 1→0.95 + fade, входяща 0.95→1 (по спека) */
+  /* Смяна на стъпка: моментална, за да не забива съдържанието при анимации */
   const go = (target: number) => {
-    if (target < 0 || target > questions.length - 1 || target === current || animating.current) return
+    if (target < 0 || target > questions.length - 1 || target === current) return
     setStepError('')
-    const items = gsap.utils.toArray<HTMLElement>('.wz-anim', rootRef.current)
-    if (!items.length || prefersReduced()) { setCurrent(target); return }
-    animating.current = true
-    const dir = target > current ? 1 : -1
-    gsap.to(items, { opacity: 0, x: -20 * dir, duration: 0.25, ease: 'power2.in', onComplete: () => {
-      setCurrent(target)
-      requestAnimationFrame(() => {
-        const fresh = gsap.utils.toArray<HTMLElement>('.wz-anim', rootRef.current)
-        gsap.fromTo(fresh, { opacity: 0, x: 20 * dir }, { opacity: 1, x: 0, duration: 0.35, delay: 0.1, ease: 'power3.out', clearProps: 'transform', onComplete: () => { animating.current = false } })
-      })
-    }})
+    setCurrent(target)
   }
 
   const q = questions[current]
@@ -261,6 +250,11 @@ export default function ScrollWizard() {
         shake()
         return false
       }
+    }
+    if (qq.type === 'text' && !qq.skippable && !isAnswered(formData, qq.id)) {
+      setStepError('Моля, попълнете полето, за да продължите.')
+      shake()
+      return false
     }
     if (qq.type === 'contact') {
       const errs: Record<string, string> = {}
