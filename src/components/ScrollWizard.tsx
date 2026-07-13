@@ -371,9 +371,12 @@ export default function ScrollWizard() {
       )}
 
       {q.type === 'contact' && (
-        <div className="flex flex-col gap-5 w-full">
+        <div className="flex flex-col gap-4 w-full">
           {contactFields.map((f, i) => (
-            <div key={f.id}>
+            <div key={f.id} className="text-left">
+              <label className="block text-xs font-medium text-[#1A1A1A]/70 mb-1.5 uppercase tracking-wide">
+                {f.label}
+              </label>
               <input
                 type={f.type}
                 data-field={f.id}
@@ -385,11 +388,11 @@ export default function ScrollWizard() {
                 enterKeyHint={f.hint}
                 aria-label={f.label}
                 aria-invalid={Boolean(fieldErrors[f.id])}
-                className={`w-full bg-transparent border-b-2 px-0 py-2 text-base lg:text-lg font-light text-[#1A1A1A] text-center outline-none transition-colors duration-200 ${fieldErrors[f.id] ? 'border-[#EF4444]' : 'border-[#1A1A1A]/25 focus:border-[#DC2626]'}`}
+                className={`w-full bg-white border-2 rounded-xl px-4 py-3 text-base font-light text-[#1A1A1A] outline-none transition-all duration-200 ${fieldErrors[f.id] ? 'border-[#EF4444] bg-[#FFF5F5]' : 'border-[#E5E5E5] focus:border-[#DC2626] focus:shadow-[0_0_0_3px_rgba(220,38,38,0.1)]'}`}
               />
-              <div className={`text-xs font-light mt-2 text-center ${fieldErrors[f.id] ? 'text-[#EF4444] font-medium' : 'text-[#1A1A1A]/70'}`}>
-                {fieldErrors[f.id] ? `⚠ ${fieldErrors[f.id]}` : f.label}
-              </div>
+              {fieldErrors[f.id] && (
+                <p className="text-xs font-medium text-[#EF4444] mt-1.5">⚠ {fieldErrors[f.id]}</p>
+              )}
             </div>
           ))}
         </div>
@@ -567,6 +570,9 @@ export default function ScrollWizard() {
                       onClick={() => startWizard(opt)}
                       className="group w-full max-w-[340px] min-h-[56px] lg:min-h-[52px] px-5 py-3.5 rounded-xl border-2 border-[#E5E5E5] bg-white flex items-center gap-3 text-base font-semibold text-[#1A1A1A] leading-snug text-left transition-all duration-200 hover:border-[#DC2626] hover:bg-[#FFF5F5] hover:translate-x-1.5 hover:shadow-[0_2px_8px_rgba(220,38,38,0.08)] active:scale-[0.99] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#DC2626]"
                     >
+                      <span className={`shrink-0 w-[22px] h-[22px] rounded-full border-2 flex items-center justify-center transition-colors duration-200 ${formData.brandType === opt ? 'bg-[#DC2626] border-[#DC2626]' : 'border-[#D1D1D1] bg-white group-hover:border-[#DC2626]'}`}>
+                        {formData.brandType === opt && <span className="w-2 h-2 rounded-full bg-white" />}
+                      </span>
                       <span className="flex-1">{opt}</span>
                       <span className="shrink-0 opacity-40 group-hover:opacity-100 group-hover:translate-x-1 transition-all duration-200">
                         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#DC2626" strokeWidth="2.5">
@@ -630,11 +636,11 @@ export default function ScrollWizard() {
                         aria-current={active ? 'step' : undefined}
                         className={`group flex items-baseline gap-2.5 text-left transition-colors duration-200 py-0.5 ${done ? 'cursor-pointer' : active ? 'cursor-default' : 'cursor-default'}`}
                       >
-                        <span className={`text-xs font-mono font-bold w-7 shrink-0 ${active ? 'text-[#DC2626]' : 'text-[#1A1A1A]/40'}`}>{String(i + 1).padStart(2, '0')}</span>
+                        <span className={`text-xs font-mono font-bold w-7 shrink-0 ${active ? 'text-[#DC2626]' : 'text-[#1A1A1A]/50'}`}>{String(i + 1).padStart(2, '0')}</span>
                         <span className={`leading-snug transition-colors duration-200 ${
                           active ? 'text-[#DC2626] text-lg font-bold'
-                          : done ? 'text-[#1A1A1A]/65 text-base font-medium group-hover:text-[#DC2626] group-hover:underline underline-offset-4'
-                          : 'text-[#1A1A1A]/40 text-base font-normal'
+                          : done ? 'text-[#1A1A1A]/70 text-base font-medium group-hover:text-[#DC2626] group-hover:underline underline-offset-4'
+                          : 'text-[#1A1A1A]/50 text-base font-normal'
                         }`}>
                           {active && <span className="inline-block w-2 h-2 rounded-full bg-[#DC2626] mr-2 align-middle" aria-hidden="true" />}
                           {sq.title}
