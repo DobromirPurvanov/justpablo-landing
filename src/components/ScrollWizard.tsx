@@ -265,7 +265,7 @@ export default function ScrollWizard() {
         setFieldErrors(errs)
         shake()
         const first = contactFields.find(f => errs[f.id])
-        if (first) (rootRef.current?.querySelector(`[data-field="${first.id}"]`) as HTMLInputElement | null)?.focus()
+        if (first) (rootRef.current?.querySelector(`[data-field="${first.id}"]`) as HTMLInputElement | null)?.focus({ preventScroll: true })
         return false
       }
     }
@@ -310,17 +310,20 @@ export default function ScrollWizard() {
     if (el) gsap.fromTo(el, { scale: 1 }, { keyframes: [{ scale: 1.05 }, { scale: 1 }], duration: 0.5, delay: 0.15, ease: 'power1.inOut' })
   }, [isSuccess])
 
-  /* Автоматичен фокус и ресет на скрола вътре в кръга при смяна на стъпка */
+  /* Ресет на скрола вътре в кръга + фокус при смяна на стъпка.
+     ВАЖНО: фокусираме с preventScroll и НЕ викаме scrollIntoView —
+     Lenis управлява скрола на страницата и всяко нативно скролване
+     на документа го разсинхронизира ("скролът бяга"). */
   useEffect(() => {
     if (phase !== 'wizard' || isSuccess) return
     const container = contentRef.current
     if (container) container.scrollTop = 0
     const timer = window.setTimeout(() => {
       const focusable = rootRef.current?.querySelector<HTMLElement>('.wz-opt, input[data-field], input[type="text"], [role="checkbox"]')
-      if (focusable) {
-        focusable.focus()
-        focusable.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'nearest' })
-      }
+      if (!focusable) return
+      // Не отваряме клавиатурата насила за текстови полета на touch устройства
+      if (focusable.tagName === 'INPUT' && !finePointer.current) return
+      focusable.focus({ preventScroll: true })
     }, 420)
     return () => window.clearTimeout(timer)
   }, [current, phase, isSuccess])
@@ -393,8 +396,6 @@ export default function ScrollWizard() {
             value={formData[q.id] || ''}
             onChange={e => setValue(q.id, e.target.value)}
             onKeyDown={e => { if (e.key === 'Enter') next() }}
-            onFocus={e => { e.target.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'nearest' }) }}
-            autoFocus={finePointer.current}
             enterKeyHint="next"
             aria-label={q.placeholder}
             className="w-full bg-transparent border-b-2 border-[#1A1A1A]/25 focus:border-[#DC2626] px-0 py-3 text-base lg:text-lg font-light text-[#1A1A1A] text-center outline-none transition-colors duration-200"
@@ -405,7 +406,7 @@ export default function ScrollWizard() {
 
       {q.type === 'contact' && (
         <div className="flex flex-col gap-2 lg:gap-3 w-full">
-          {contactFields.map((f, i) => (
+          {contactFields.map(f => (
             <div key={f.id} className="text-left">
               <label className="block text-[10px] lg:text-[11px] font-medium text-[#1A1A1A]/70 mb-0.5 uppercase tracking-wide">
                 {f.label}
@@ -416,8 +417,6 @@ export default function ScrollWizard() {
                 value={formData[f.id] || ''}
                 onChange={e => setValue(f.id, e.target.value)}
                 onBlur={() => validateContactField(f.id, formData[f.id])}
-                onFocus={e => { e.target.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'nearest' }) }}
-                autoFocus={i === 0 && finePointer.current}
                 autoComplete={f.auto}
                 enterKeyHint={f.hint}
                 aria-label={f.label}
@@ -702,7 +701,14 @@ export default function ScrollWizard() {
                 <div className="absolute inset-[4.5%] rounded-full bg-white border border-[#E5E5E5] shadow-[0_8px_40px_rgba(0,0,0,0.08)]">
                   <div className="wz-anim absolute inset-0 flex flex-col items-center justify-between pt-[7%] pb-[6%] px-[10%]">
                     {zoneA}
-                    <div ref={contentRef} className="w-full max-w-[480px] flex-1 min-h-0 flex flex-col items-center gap-4 lg:gap-5 my-2 lg:my-3 overflow-y-auto scroll-smooth overscroll-contain [&::-webkit-scrollbar]:hidden [scrollbar-width:none]">
+                    <div
+                      ref={contentRef}
+                      className="w-full max-w-[480px] flex-1 min-h-0 flex flex-col items-center gap-4 lg:gap-5 my-2 lg:my-3 overflow-y-auto scroll-smooth overscroll-contain [&::-webkit-scrollbar]:hidden [scrollbar-width:none]"
+                      style={{
+                        maskImage: 'linear-gradient(to bottom, transparent 0, #000 14px, #000 calc(100% - 14px), transparent 100%)',
+                        WebkitMaskImage: 'linear-gradient(to bottom, transparent 0, #000 14px, #000 calc(100% - 14px), transparent 100%)',
+                      }}
+                    >
                       {zoneTitle}
                       {answerArea}
                       {skipLink}
