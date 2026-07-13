@@ -64,10 +64,13 @@ export default function LandingHero() {
               </svg>
             </button>
             <button
-              onClick={() => scrollToId('cena')}
-              className="hero-cta inline-flex items-center justify-center sm:justify-start gap-2 text-sm uppercase tracking-[0.12em] font-medium text-[#1A1A1A]/70 hover:text-[#DC2626] px-2 py-4 transition-colors duration-300"
+              onClick={() => scrollToId('zapitvane')}
+              className="hero-cta inline-flex items-center justify-center gap-2 w-full sm:w-auto border-2 border-[#DC2626] text-[#DC2626] px-8 py-4 rounded-full text-sm uppercase tracking-[0.12em] font-medium hover:bg-[#DC2626] hover:text-white hover:scale-[1.03] active:scale-95 transition-all duration-300"
             >
-              Виж цената
+              Запитване
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                <path d="M12 5v14M19 12l-7 7-7-7" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
             </button>
           </div>
 
