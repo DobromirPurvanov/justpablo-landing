@@ -101,9 +101,10 @@ export default function LandingHero() {
             </button>
           </div>
 
-          {/* Мобилно: Pablo се оглежда сам и мига (desktop версията е вдясно, абсолютно позиционирана) */}
-          <div className="md:hidden mt-12 flex justify-end pr-1">
-            <div className="face-inner w-[min(54vw,240px)]">
+          {/* Мобилно: Pablo се оглежда сам и мига — центриран и по-голям
+              (desktop версията е вдясно, абсолютно позиционирана) */}
+          <div className="md:hidden mt-12 flex justify-center">
+            <div className="face-inner w-[min(78vw,320px)]">
               <LogoFace />
             </div>
           </div>
