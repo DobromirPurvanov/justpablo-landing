@@ -42,12 +42,22 @@ export default function PriceSpotlight() {
             Premium Digital Analysis
           </h2>
 
+          {/* Промоционална цена */}
+          <div className="ps-item mb-3 flex items-center justify-center gap-3 flex-wrap">
+            <span className="text-[clamp(24px,3vw,40px)] font-light text-[#1A1A1A]/40 line-through decoration-[#DC2626]/40">
+              970 €
+            </span>
+            <span className="inline-block bg-[#DC2626] text-white text-[10px] sm:text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wider">
+              Промоция −50%
+            </span>
+          </div>
+
           <div className="ps-item mb-2">
             <span className="text-[clamp(56px,8vw,110px)] font-extralight text-[#DC2626] leading-none tracking-tight">485 €</span>
           </div>
           <div className="ps-item text-base font-light text-[#1A1A1A]/60 mb-2">{bgn(485)}</div>
           <div className="ps-item text-xs uppercase tracking-[0.18em] font-medium text-[#1A1A1A]/60 mb-10">
-            еднократно · единствената ни публична цена · задължителен първи етап
+            еднократно · промоционална цена · задължителен първи етап
           </div>
 
           <div className="ps-item flex flex-col gap-3 max-w-xl mx-auto text-left mb-10">
