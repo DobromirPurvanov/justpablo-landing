@@ -73,7 +73,7 @@ export default function PromoCountdown({ className = '' }: { className?: string 
 
   return (
     <div className={`inline-flex flex-col gap-2.5 ${className}`}>
-      <span className="inline-flex items-center gap-2 text-[11px] lg:text-xs uppercase tracking-[0.12em] font-semibold text-[#1A1A1A]/55">
+      <span className="inline-flex items-center gap-2 text-[11px] lg:text-xs uppercase tracking-[0.12em] font-semibold text-[#1A1A1A]/65">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#DC2626" strokeWidth="2" aria-hidden="true">
           <circle cx="12" cy="12" r="9" />
           <path d="M12 7v5l3 2" strokeLinecap="round" strokeLinejoin="round" />
@@ -88,13 +88,13 @@ export default function PromoCountdown({ className = '' }: { className?: string 
             className="flex flex-col items-center justify-center bg-[#1A1A1A] text-white rounded-xl px-2.5 py-1.5 min-w-[48px] shadow-[0_6px_20px_rgba(0,0,0,0.10)]"
           >
             <span className="text-xl lg:text-2xl font-bold leading-none tabular-nums">{pad(u.v)}</span>
-            <span className="text-[9px] uppercase tracking-[0.08em] text-white/45 mt-1">{u.l}</span>
+            <span className="text-[9px] uppercase tracking-[0.08em] text-white/60 mt-1">{u.l}</span>
           </div>
         ))}
       </div>
 
       {/* Live viewers — социално доказателство/ургентност */}
-      <span className="inline-flex items-center gap-2 text-xs font-medium text-[#1A1A1A]/60" aria-live="polite">
+      <span className="inline-flex items-center gap-2 text-xs font-medium text-[#1A1A1A]/70" aria-live="polite">
         <span className="relative flex h-2 w-2 shrink-0">
           <span className="absolute inline-flex h-full w-full rounded-full bg-[#DC2626] opacity-60 motion-safe:animate-ping" />
           <span className="relative inline-flex h-2 w-2 rounded-full bg-[#DC2626]" />
