@@ -146,8 +146,10 @@
 .marquee-track-right {
   animation: marquee-right 60s linear infinite;
 }
-.marquee-group:hover .marquee-track-left,
-.marquee-group:hover .marquee-track-right {
+/* Пауза само когато курсорът е върху самия движещ се ред (не върху цялата
+   секция/заглавие/празните полета) — иначе спираше излишно. */
+.marquee-track-left:hover,
+.marquee-track-right:hover {
   animation-play-state: paused;
 }
 .marquee-fade {

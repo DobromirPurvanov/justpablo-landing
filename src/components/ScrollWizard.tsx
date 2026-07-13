@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import gsap from 'gsap'
 import { maskReveal } from '../lib/motion'
+import { loadRecaptcha, getRecaptchaToken } from '../lib/recaptcha'
 import LogoFace from './LogoFace'
 
 /* ────────────────────────────────────────────────────────────
@@ -174,6 +175,12 @@ export default function ScrollWizard() {
     if (el && phase === 'intro' && !isSuccess) maskReveal(el.querySelector('.wz-h1'), null, { delay: 0.1 })
   }, [phase, isSuccess])
 
+  /* Зареждаме reCAPTCHA чак когато потребителят влезе във формата
+     (не на page load), за да не тежи на началото и значката да не стои от старта. */
+  useEffect(() => {
+    if (phase === 'wizard') loadRecaptcha().catch(() => { /* ще опитаме пак при submit */ })
+  }, [phase])
+
   const setValue = (id: string, value: any) => {
     setFormData(prev => ({ ...prev, [id]: value }))
     setStepError('')
@@ -289,10 +296,11 @@ export default function ScrollWizard() {
     setIsSubmitting(true)
     setStepError('')
     try {
+      const recaptchaToken = await getRecaptchaToken('submit')
       const res = await fetch('/api/send-email', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(formData),
+        body: JSON.stringify({ ...formData, recaptchaToken }),
       })
       const data = await res.json()
       if (!res.ok || !data.success) {

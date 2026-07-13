@@ -7,6 +7,38 @@ function parseBody(req) {
   return req.body || {}
 }
 
+/* Google reCAPTCHA v3 проверка. Ако RECAPTCHA_SECRET_KEY не е зададен,
+   пропускаме (формата продължава да работи), но логваме предупреждение. */
+async function verifyRecaptcha(token) {
+  const secret = process.env.RECAPTCHA_SECRET_KEY
+  const minScore = Number(process.env.RECAPTCHA_MIN_SCORE || '0.5')
+
+  if (!secret) {
+    console.warn('RECAPTCHA_SECRET_KEY не е зададен — пропускам reCAPTCHA проверката')
+    return { ok: true, skipped: true }
+  }
+  if (!token) return { ok: false, reason: 'missing-token' }
+
+  try {
+    const params = new URLSearchParams({ secret, response: String(token) })
+    const resp = await fetch('https://www.google.com/recaptcha/api/siteverify', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: params,
+    })
+    const data = await resp.json()
+    if (!data.success) return { ok: false, reason: 'verify-failed', errors: data['error-codes'] }
+    if (typeof data.score === 'number' && data.score < minScore) {
+      return { ok: false, reason: 'low-score', score: data.score }
+    }
+    return { ok: true, score: data.score }
+  } catch (err) {
+    // Мрежов проблем към Google — не блокираме легитимен потребител.
+    console.error('reCAPTCHA verify error:', err)
+    return { ok: true, error: true }
+  }
+}
+
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
     res.setHeader('Allow', ['POST'])
@@ -25,6 +57,12 @@ export default async function handler(req, res) {
 
     if (!name || !String(name).trim() || !email || !String(email).trim()) {
       return res.status(400).json({ success: false, error: 'Име и имейл са задължителни.' })
+    }
+
+    const gate = await verifyRecaptcha(body.recaptchaToken)
+    if (!gate.ok) {
+      console.warn('reCAPTCHA отхвърли заявка:', gate)
+      return res.status(400).json({ success: false, error: 'Проверката за сигурност не бе успешна. Моля, опитайте отново.' })
     }
 
     const { html: htmlContent, text: textContent, subject } = buildInquiryEmail(body)
