@@ -67,12 +67,12 @@ function ProgressRing({ current, total }: { current: number; total: number }) {
   return (
     <svg className="absolute inset-0 w-full h-full pointer-events-none" viewBox="0 0 108 108" aria-hidden="true">
       {/* фонов track */}
-      <circle cx="54" cy="54" r="48" fill="none" stroke="#E5E5E5" strokeWidth="3" />
+      <circle cx="54" cy="54" r="48" fill="none" stroke="#F0F0F0" strokeWidth="2.2" />
       {/* червен прогрес, който се запълва отгоре по часовниковата стрелка */}
       <g transform="rotate(-90 54 54)">
         <circle
           cx="54" cy="54" r="48"
-          fill="none" stroke="#DC2626" strokeWidth="3" strokeLinecap="round"
+          fill="none" stroke="#DC2626" strokeWidth="2.2" strokeLinecap="round"
           pathLength="100" strokeDasharray="100"
           className="wz-ring-progress"
           style={{ strokeDashoffset: 100 - pct }}
@@ -319,23 +319,18 @@ export default function ScrollWizard() {
       role={role}
       aria-checked={selected}
       onClick={onClick}
-      className={`wz-opt w-full min-h-[52px] lg:min-h-[48px] px-4 lg:px-5 py-3 lg:py-3 rounded-xl border-2 flex items-center gap-2.5 lg:gap-3 text-sm lg:text-base font-semibold leading-snug text-left transition-all duration-200 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#DC2626] ${
+      className={`wz-opt w-full min-h-[48px] lg:min-h-[44px] px-5 lg:px-6 py-3 rounded-full border-2 flex items-center gap-3 text-sm lg:text-base font-semibold leading-snug text-left transition-all duration-200 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#DC2626] ${
         selected
-          ? 'border-[#DC2626] border-l-4 bg-[#FFF5F5] text-[#1A1A1A] shadow-[0_0_0_3px_rgba(220,38,38,0.1)]'
-          : 'border-[#E5E5E5] bg-white text-[#1A1A1A]/80 hover:border-[#DC2626] hover:bg-[#FFF5F5] hover:translate-x-1.5 hover:shadow-[0_2px_8px_rgba(220,38,38,0.08)]'
+          ? 'bg-[#DC2626] border-[#DC2626] text-white shadow-[0_4px_14px_rgba(220,38,38,0.25)]'
+          : 'border-[#E5E5E5] bg-white text-[#1A1A1A]/85 hover:border-[#DC2626] hover:bg-[#FFF5F5] hover:translate-x-1 hover:shadow-[0_2px_10px_rgba(220,38,38,0.08)]'
       }`}
     >
-      <span className={`shrink-0 flex items-center justify-center transition-colors duration-200 ${role === 'checkbox' ? 'w-[22px] h-[22px] rounded-md border-2' : 'w-[22px] h-[22px] rounded-full border-2'} ${selected ? 'bg-[#DC2626] border-[#DC2626]' : 'border-[#D1D1D1] bg-white'}`}>
+      <span className={`shrink-0 flex items-center justify-center transition-colors duration-200 ${role === 'checkbox' ? 'w-5 h-5 rounded-md border-2' : 'w-5 h-5 rounded-full border-2'} ${selected ? 'border-white bg-white' : 'border-[#D1D1D1] bg-white'}`}>
         {selected && (role === 'checkbox'
-          ? <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="3.5"><polyline points="20 6 9 17 4 12" /></svg>
-          : <span className="w-2 h-2 rounded-full bg-white" />)}
+          ? <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#DC2626" strokeWidth="3.5"><polyline points="20 6 9 17 4 12" /></svg>
+          : <span className="w-2 h-2 rounded-full bg-[#DC2626]" />)}
       </span>
       <span className="flex-1">{opt}</span>
-      {selected && (
-        <span className="shrink-0 w-6 h-6 rounded-full bg-[#DC2626] flex items-center justify-center" aria-hidden="true">
-          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="3.5"><polyline points="20 6 9 17 4 12" /></svg>
-        </span>
-      )}
     </button>
   )
 
@@ -588,10 +583,10 @@ export default function ScrollWizard() {
                       key={opt}
                       type="button"
                       onClick={() => startWizard(opt)}
-                      className="group w-full max-w-[340px] min-h-[56px] lg:min-h-[52px] px-5 py-3.5 rounded-xl border-2 border-[#E5E5E5] bg-white flex items-center gap-3 text-base font-semibold text-[#1A1A1A] leading-snug text-left transition-all duration-200 hover:border-[#DC2626] hover:bg-[#FFF5F5] hover:translate-x-1.5 hover:shadow-[0_2px_8px_rgba(220,38,38,0.08)] active:scale-[0.99] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#DC2626]"
+                      className="group w-full max-w-[340px] min-h-[50px] lg:min-h-[48px] px-6 py-3 rounded-full border-2 border-[#E5E5E5] bg-white flex items-center gap-3 text-base font-semibold text-[#1A1A1A] leading-snug text-left transition-all duration-200 hover:border-[#DC2626] hover:bg-[#FFF5F5] hover:translate-x-1 hover:shadow-[0_2px_10px_rgba(220,38,38,0.08)] active:scale-[0.99] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#DC2626]"
                     >
-                      <span className={`shrink-0 w-[22px] h-[22px] rounded-full border-2 flex items-center justify-center transition-colors duration-200 ${formData.brandType === opt ? 'bg-[#DC2626] border-[#DC2626]' : 'border-[#D1D1D1] bg-white group-hover:border-[#DC2626]'}`}>
-                        {formData.brandType === opt && <span className="w-2 h-2 rounded-full bg-white" />}
+                      <span className="shrink-0 w-5 h-5 rounded-full border-2 border-[#D1D1D1] bg-white flex items-center justify-center transition-colors duration-200 group-hover:border-[#DC2626]">
+                        <span className="w-2 h-2 rounded-full bg-[#DC2626] opacity-0 group-hover:opacity-100 transition-opacity duration-200" />
                       </span>
                       <span className="flex-1">{opt}</span>
                       <span className="shrink-0 opacity-40 group-hover:opacity-100 group-hover:translate-x-1 transition-all duration-200">
