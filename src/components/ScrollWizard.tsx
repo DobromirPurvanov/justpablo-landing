@@ -137,10 +137,12 @@ export default function ScrollWizard() {
   const [current, setCurrent] = useState(0)
   const [formData, setFormData] = useState<Record<string, any>>({})
   const [isSuccess, setIsSuccess] = useState(false)
+  const [isSubmitting, setIsSubmitting] = useState(false)
   const [stepError, setStepError] = useState('')
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({})
   const [resume, setResume] = useState<{ formData: Record<string, any>; current: number; phase: 'intro' | 'wizard' } | null>(null)
   const rootRef = useRef<HTMLDivElement>(null)
+  const contentRef = useRef<HTMLDivElement>(null)
   const animating = useRef(false)
   // На touch устройства не отваряме клавиатурата насила при смяна на стъпка
   const finePointer = useRef(typeof window !== 'undefined' && window.matchMedia('(pointer: fine)').matches)
@@ -280,14 +282,32 @@ export default function ScrollWizard() {
   const prev = () => go(current - 1)
   const skip = () => { setStepError(''); go(current + 1) }
 
-  const submit = () => {
+  const submit = async () => {
     if (!formData.privacy) {
       setStepError('Моля, потвърдете, че сте съгласни с политиката за поверителност.')
       shake()
       return
     }
-    clearSaved()
-    setIsSuccess(true)
+    setIsSubmitting(true)
+    setStepError('')
+    try {
+      const res = await fetch('/api/send-email', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(formData),
+      })
+      const data = await res.json()
+      if (!res.ok || !data.success) {
+        throw new Error(data.error || 'Грешка при изпращане на запитването.')
+      }
+      clearSaved()
+      setIsSuccess(true)
+    } catch (err: any) {
+      setStepError(err.message || 'Неуспешно изпращане. Моля, опитайте отново.')
+      shake()
+    } finally {
+      setIsSubmitting(false)
+    }
   }
 
   useEffect(() => {
@@ -296,12 +316,17 @@ export default function ScrollWizard() {
     if (el) gsap.fromTo(el, { scale: 1 }, { keyframes: [{ scale: 1.05 }, { scale: 1 }], duration: 0.5, delay: 0.15, ease: 'power1.inOut' })
   }, [isSuccess])
 
-  /* Автоматичен фокус върху първия интерактивен елемент при смяна на стъпка */
+  /* Автоматичен фокус и ресет на скрола вътре в кръга при смяна на стъпка */
   useEffect(() => {
     if (phase !== 'wizard' || isSuccess) return
+    const container = contentRef.current
+    if (container) container.scrollTop = 0
     const timer = window.setTimeout(() => {
       const focusable = rootRef.current?.querySelector<HTMLElement>('.wz-opt, input[data-field], input[type="text"], [role="checkbox"]')
-      focusable?.focus()
+      if (focusable) {
+        focusable.focus()
+        focusable.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'nearest' })
+      }
     }, 420)
     return () => window.clearTimeout(timer)
   }, [current, phase, isSuccess])
@@ -339,7 +364,7 @@ export default function ScrollWizard() {
     <div className="w-full">
       {/* Грешка на стъпката — над опциите, aria-live за скрийнрийдъри */}
       <div aria-live="polite" className={stepError ? 'mb-3' : ''}>
-        {stepError && <p className="text-sm font-semibold text-[#EF4444] text-center">⚠ {stepError}</p>}
+        {stepError && <p className="text-sm font-semibold text-[#EF4444] text-center">{stepError}</p>}
       </div>
 
       {q.type === 'radio' && q.options && (
@@ -374,7 +399,7 @@ export default function ScrollWizard() {
             value={formData[q.id] || ''}
             onChange={e => setValue(q.id, e.target.value)}
             onKeyDown={e => { if (e.key === 'Enter') next() }}
-            onFocus={e => { if (!finePointer.current) e.target.scrollIntoView({ behavior: 'smooth', block: 'center' }) }}
+            onFocus={e => { e.target.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'nearest' }) }}
             autoFocus={finePointer.current}
             enterKeyHint="next"
             aria-label={q.placeholder}
@@ -397,7 +422,7 @@ export default function ScrollWizard() {
                 value={formData[f.id] || ''}
                 onChange={e => setValue(f.id, e.target.value)}
                 onBlur={() => validateContactField(f.id, formData[f.id])}
-                onFocus={e => { if (!finePointer.current) e.target.scrollIntoView({ behavior: 'smooth', block: 'center' }) }}
+                onFocus={e => { e.target.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'nearest' }) }}
                 autoFocus={i === 0 && finePointer.current}
                 autoComplete={f.auto}
                 enterKeyHint={f.hint}
@@ -406,7 +431,7 @@ export default function ScrollWizard() {
                 className={`w-full bg-white border-2 rounded-xl px-3 lg:px-4 py-2 lg:py-2.5 text-sm lg:text-base font-light text-[#1A1A1A] outline-none transition-all duration-200 ${fieldErrors[f.id] ? 'border-[#EF4444] bg-[#FFF5F5]' : 'border-[#E5E5E5] focus:border-[#DC2626] focus:shadow-[0_0_0_3px_rgba(220,38,38,0.1)]'}`}
               />
               {fieldErrors[f.id] && (
-                <p className="text-[11px] font-medium text-[#EF4444] mt-0.5">⚠ {fieldErrors[f.id]}</p>
+                <p className="text-[11px] font-medium text-[#EF4444] mt-0.5">{fieldErrors[f.id]}</p>
               )}
             </div>
           ))}
@@ -458,12 +483,15 @@ export default function ScrollWizard() {
         <button
           type="button"
           onClick={isReview ? submit : next}
-          className="w-full h-14 rounded-xl bg-[#DC2626] text-white text-lg font-semibold flex items-center justify-center gap-2 hover:bg-[#B91C1C] active:scale-[0.98] transition-all duration-200 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#DC2626]"
+          disabled={isSubmitting}
+          className="w-full h-14 rounded-xl bg-[#DC2626] text-white text-lg font-semibold flex items-center justify-center gap-2 hover:bg-[#B91C1C] active:scale-[0.98] transition-all duration-200 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#DC2626] disabled:opacity-70 disabled:cursor-not-allowed"
         >
-          {isReview ? 'Изпрати запитване' : 'Напред'}
-          {isReview
+          {isSubmitting
+            ? (<><span className="w-5 h-5 border-2 border-white/40 border-t-white rounded-full animate-spin" /> Изпраща се...</>)
+            : isReview ? 'Изпрати запитване' : 'Напред'}
+          {!isSubmitting && (isReview
             ? <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z" strokeLinecap="round" strokeLinejoin="round" /></svg>
-            : <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M5 12h14M13 6l6 6-6 6" strokeLinecap="round" strokeLinejoin="round" /></svg>}
+            : <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M5 12h14M13 6l6 6-6 6" strokeLinecap="round" strokeLinejoin="round" /></svg>)}
         </button>
       )}
       <button
@@ -480,12 +508,15 @@ export default function ScrollWizard() {
         <button
           type="button"
           onClick={isReview ? submit : next}
-          className={`${isReview ? 'min-w-[200px] h-[52px] text-lg font-bold px-6' : 'w-[160px] h-12 text-base font-semibold'} rounded-full bg-[#DC2626] text-white flex items-center justify-center gap-2 hover:bg-[#B91C1C] hover:-translate-y-0.5 hover:shadow-[0_4px_12px_rgba(220,38,38,0.3)] active:translate-y-0 active:shadow-none transition-all duration-200 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#DC2626]`}
+          disabled={isSubmitting}
+          className={`${isReview ? 'min-w-[200px] h-[52px] text-lg font-bold px-6' : 'w-[160px] h-12 text-base font-semibold'} rounded-full bg-[#DC2626] text-white flex items-center justify-center gap-2 hover:bg-[#B91C1C] hover:-translate-y-0.5 hover:shadow-[0_4px_12px_rgba(220,38,38,0.3)] active:translate-y-0 active:shadow-none transition-all duration-200 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#DC2626] disabled:opacity-70 disabled:cursor-not-allowed disabled:hover:translate-y-0`}
         >
-          {isReview ? 'Изпрати запитване' : 'Напред'}
-          {isReview
+          {isSubmitting
+            ? (<><span className="w-5 h-5 border-2 border-white/40 border-t-white rounded-full animate-spin" /> Изпраща се...</>)
+            : isReview ? 'Изпрати запитване' : 'Напред'}
+          {!isSubmitting && (isReview
             ? <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z" strokeLinecap="round" strokeLinejoin="round" /></svg>
-            : <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M5 12h14M13 6l6 6-6 6" strokeLinecap="round" strokeLinejoin="round" /></svg>}
+            : <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M5 12h14M13 6l6 6-6 6" strokeLinecap="round" strokeLinejoin="round" /></svg>)}
         </button>
       )}
     </div>
@@ -677,7 +708,7 @@ export default function ScrollWizard() {
                 <div className="absolute inset-[4.5%] rounded-full bg-white border border-[#E5E5E5] shadow-[0_8px_40px_rgba(0,0,0,0.08)]">
                   <div className="wz-anim absolute inset-0 flex flex-col items-center justify-between pt-[7%] pb-[6%] px-[10%]">
                     {zoneA}
-                    <div className="w-full max-w-[480px] flex-1 min-h-0 flex flex-col items-center gap-4 lg:gap-5 my-2 lg:my-3 overflow-y-auto [&::-webkit-scrollbar]:hidden [scrollbar-width:none]">
+                    <div ref={contentRef} className="w-full max-w-[480px] flex-1 min-h-0 flex flex-col items-center gap-4 lg:gap-5 my-2 lg:my-3 overflow-y-auto scroll-smooth overscroll-contain [&::-webkit-scrollbar]:hidden [scrollbar-width:none]">
                       {zoneTitle}
                       {answerArea}
                       {skipLink}
@@ -690,8 +721,8 @@ export default function ScrollWizard() {
 
             {/* Мобилно: заоблена карта вместо кръг — духът на дизайна, повече място */}
             <div className="lg:hidden">
-              <div className="wz-shake rounded-[24px] border border-[#E5E5E5] bg-white shadow-[0_8px_40px_rgba(0,0,0,0.08)] p-6 min-h-[450px] flex flex-col">
-                <div className="wz-anim flex flex-col items-center gap-5 flex-1 overflow-y-auto [&::-webkit-scrollbar]:hidden [scrollbar-width:none]">
+              <div className="wz-shake rounded-[24px] border border-[#E5E5E5] bg-white shadow-[0_8px_40px_rgba(0,0,0,0.08)] p-6 min-h-[450px] max-h-[calc(100svh-180px)] flex flex-col">
+                <div ref={contentRef} className="wz-anim flex flex-col items-center gap-5 flex-1 overflow-y-auto scroll-smooth overscroll-contain [&::-webkit-scrollbar]:hidden [scrollbar-width:none]">
                   {zoneA}
                   {zoneTitle}
                   {answerArea}
