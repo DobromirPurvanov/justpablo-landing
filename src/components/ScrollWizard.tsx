@@ -48,7 +48,7 @@ const prefersReduced = () => window.matchMedia('(prefers-reduced-motion: reduce)
 function StepGlyph({ step }: { step: number }) {
   const c = { fill: 'none', stroke: '#DC2626', strokeWidth: 1.8, strokeLinecap: 'round' as const, strokeLinejoin: 'round' as const }
   return (
-    <svg width="44" height="44" viewBox="0 0 24 24" aria-hidden="true">
+    <svg width="38" height="38" viewBox="0 0 24 24" aria-hidden="true">
       {step === 0 && (<g {...c}><path d="M4 20l1-4L16.5 4.5a2.1 2.1 0 013 3L8 19l-4 1z" /><path d="M14 6l3 3" /></g>)}
       {step === 1 && (<g {...c}><circle cx="12" cy="12" r="8.5" /><circle cx="12" cy="12" r="4.5" /><circle cx="12" cy="12" r="0.8" fill="#DC2626" /></g>)}
       {step === 2 && (<g {...c}><path d="M4 17l5-5 3.5 3.5L20 8" /><path d="M15 8h5v5" /></g>)}
@@ -383,7 +383,7 @@ export default function ScrollWizard() {
       </div>
 
       {q.type === 'radio' && q.options && (
-        <div role="radiogroup" aria-label={q.title} className="flex flex-col gap-2.5 lg:gap-2 w-full">
+        <div role="radiogroup" aria-label={q.title} className="flex flex-col gap-2.5 lg:gap-1.5 w-full">
           {q.options.map(opt => (
             <OptionButton key={opt} opt={opt} role="radio" selected={formData[q.id] === opt}
               onClick={() => { setValue(q.id, opt); window.setTimeout(() => go(current + 1), 280) }} />
@@ -393,14 +393,14 @@ export default function ScrollWizard() {
 
       {q.type === 'checkbox' && q.options && (
         <div className="w-full">
-          <div role="group" aria-label={q.title} className="flex flex-col gap-2.5 lg:gap-2 w-full">
+          <div role="group" aria-label={q.title} className="flex flex-col gap-2.5 lg:gap-1.5 w-full">
             {q.options.map(opt => (
               <OptionButton key={opt} opt={opt} role="checkbox" selected={((formData[q.id] as string[]) || []).includes(opt)}
                 onClick={() => toggleCheckbox(q.id, opt)} />
             ))}
           </div>
           {((formData[q.id] as string[]) || []).length > 0 && (
-            <div className="text-xs lg:text-sm font-semibold text-[#DC2626] text-center mt-2.5" aria-live="polite">
+            <div className="text-xs font-semibold text-[#DC2626] text-center mt-1.5 lg:mt-1" aria-live="polite">
               Избрани: {((formData[q.id] as string[]) || []).length} от {q.options.length}
             </div>
           )}
@@ -426,10 +426,11 @@ export default function ScrollWizard() {
         <div className="flex flex-col gap-2 lg:gap-3 w-full">
           {contactFields.map(f => (
             <div key={f.id} className="text-left">
-              <label className="block text-[10px] lg:text-[11px] font-medium text-[#1A1A1A]/70 mb-0.5 uppercase tracking-wide">
+              <label htmlFor={`wz-field-${f.id}`} className="block text-[10px] lg:text-[11px] font-medium text-[#1A1A1A]/70 mb-0.5 uppercase tracking-wide">
                 {f.label}
               </label>
               <input
+                id={`wz-field-${f.id}`}
                 type={f.type}
                 data-field={f.id}
                 value={formData[f.id] || ''}
@@ -437,12 +438,12 @@ export default function ScrollWizard() {
                 onBlur={() => validateContactField(f.id, formData[f.id])}
                 autoComplete={f.auto}
                 enterKeyHint={f.hint}
-                aria-label={f.label}
                 aria-invalid={Boolean(fieldErrors[f.id])}
+                aria-describedby={fieldErrors[f.id] ? `wz-err-${f.id}` : undefined}
                 className={`w-full bg-white border-2 rounded-xl px-3 lg:px-4 py-2 lg:py-2.5 text-sm lg:text-base font-light text-[#1A1A1A] outline-none transition-all duration-200 ${fieldErrors[f.id] ? 'border-[#EF4444] bg-[#FFF5F5]' : 'border-[#E5E5E5] focus:border-[#DC2626] focus:shadow-[0_0_0_3px_rgba(220,38,38,0.1)]'}`}
               />
               {fieldErrors[f.id] && (
-                <p className="text-[11px] font-medium text-[#EF4444] mt-0.5">{fieldErrors[f.id]}</p>
+                <p id={`wz-err-${f.id}`} role="alert" className="text-[11px] font-medium text-[#EF4444] mt-0.5">{fieldErrors[f.id]}</p>
               )}
             </div>
           ))}
@@ -451,7 +452,7 @@ export default function ScrollWizard() {
 
       {q.type === 'review' && (
         <div className="w-full text-left">
-          <ul className="flex flex-col gap-2">
+          <ul className="flex flex-col gap-1 lg:gap-0.5">
             {[{ short: 'Тип бранд', val: formData.brandType, edit: () => setPhase('intro') },
               ...questions.slice(0, 7).map((rq, i) => ({
                 short: rq.short,
@@ -460,7 +461,7 @@ export default function ScrollWizard() {
                   : Array.isArray(formData[rq.id]) ? (formData[rq.id] as string[]).join(', ') : formData[rq.id],
                 edit: () => go(i),
               }))].map(row => (
-              <li key={row.short} className="flex items-baseline justify-between gap-3 text-xs lg:text-sm border-b border-[#E5E5E5] pb-1.5">
+              <li key={row.short} className="flex items-baseline justify-between gap-3 text-xs lg:text-sm border-b border-[#E5E5E5] pb-1.5 lg:pb-1">
                 <span className="shrink-0 font-medium text-[#1A1A1A]/60">{row.short}</span>
                 <span className="text-right text-[#1A1A1A] font-light truncate">{row.val || '—'}</span>
                 <button type="button" onClick={row.edit} className="shrink-0 text-[11px] text-[#DC2626] underline underline-offset-2 hover:no-underline py-1">Редактирай</button>
@@ -472,7 +473,7 @@ export default function ScrollWizard() {
             role="checkbox"
             aria-checked={Boolean(formData.privacy)}
             onClick={() => setValue('privacy', !formData.privacy)}
-            className="mt-4 flex items-start gap-3 text-left w-full py-2 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#DC2626]"
+            className="mt-3 lg:mt-2 flex items-start gap-3 text-left w-full py-2 lg:py-1 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#DC2626]"
           >
             <span className={`mt-0.5 w-5 h-5 rounded-[5px] border-2 flex items-center justify-center shrink-0 transition-colors duration-200 ${formData.privacy ? 'bg-[#DC2626] border-[#DC2626]' : 'border-[#1A1A1A]/30 bg-white'}`}>
               {formData.privacy && <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="3.5"><polyline points="20 6 9 17 4 12" /></svg>}
@@ -541,7 +542,7 @@ export default function ScrollWizard() {
 
   /* ─── Зона А: иконка + стъпка ─── */
   const zoneA = (
-    <div className="flex flex-col items-center gap-2">
+    <div className="flex flex-col items-center gap-1.5">
       <StepGlyph step={current} />
       <div className="inline-flex items-center bg-[#F5F5F5] text-[#1A1A1A]/60 px-3 py-1 rounded-full text-xs font-semibold uppercase tracking-[0.05em]">
         Стъпка {current + 1} от {questions.length}
@@ -552,7 +553,7 @@ export default function ScrollWizard() {
   const zoneTitle = (
     <div className="text-center px-2">
       <h2 className="text-lg lg:text-[clamp(18px,1.6vw,24px)] font-bold text-[#1A1A1A] leading-tight max-w-[95%] mx-auto">{q.title}</h2>
-      {q.subtitle && <p className="text-xs lg:text-sm font-light text-[#1A1A1A]/60 mt-1.5 lg:mt-2 leading-relaxed max-w-sm mx-auto">{q.subtitle}</p>}
+      {q.subtitle && <p className={`text-xs lg:text-sm font-light text-[#1A1A1A]/60 mt-1.5 lg:mt-2 leading-relaxed max-w-sm mx-auto ${isReview ? 'lg:hidden' : ''}`}>{q.subtitle}</p>}
     </div>
   )
 
@@ -691,7 +692,7 @@ export default function ScrollWizard() {
 
               {/* Кръгът: ring progress с точки отвън, зони А/Б/В вътре */}
               <div className="flex lg:col-span-8 justify-center xl:justify-end">
-                <div className="wz-shake relative w-[min(52vw,780px,88vh)] aspect-square shrink-0">
+                <div className="wz-shake relative w-[min(52vw,780px,92vh)] aspect-square shrink-0">
                   <ProgressRing current={current} total={questions.length} />
                   <div className="absolute inset-[6%] rounded-full bg-white border border-[#E5E5E5] shadow-[0_8px_40px_rgba(0,0,0,0.08)]">
                     <div className="absolute inset-0 flex flex-col items-center justify-between pt-[4%] pb-[3.5%] px-[9%]">
@@ -705,8 +706,8 @@ export default function ScrollWizard() {
                       >
                         {zoneTitle}
                         {answerArea}
-                        {skipLink}
                       </div>
+                      {skipLink}
                       {navButtons('desktop')}
                     </div>
                   </div>
