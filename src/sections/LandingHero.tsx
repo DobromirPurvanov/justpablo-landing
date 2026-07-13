@@ -35,7 +35,7 @@ export default function LandingHero() {
       <div className="absolute top-[15%] right-[-8%] w-[320px] h-[320px] lg:w-[520px] lg:h-[520px] rounded-full bg-[#DC2626]/[0.04] blur-3xl pointer-events-none" />
 
       {/* Интерактивното лого — очите следват мишката */}
-      <div className="hidden md:block absolute right-[3%] lg:right-[5%] top-[56%] -translate-y-1/2 w-[clamp(280px,34vw,540px)] z-[5]">
+      <div className="hidden md:block absolute right-[1%] lg:right-[3%] top-[58%] -translate-y-1/2 w-[clamp(220px,26vw,440px)] z-[5]">
         <div className="face-inner">
           <LogoFace />
         </div>
@@ -43,7 +43,7 @@ export default function LandingHero() {
 
       <div className="section-padding w-full relative z-10">
         <div className="container-max">
-          <h1 ref={titleRef} className="font-thin-display text-[clamp(36px,7.5vw,110px)] text-[#1A1A1A] leading-[1.02]">
+          <h1 ref={titleRef} className="font-thin-display text-[clamp(36px,6.5vw,96px)] text-[#1A1A1A] leading-[1.02] lg:max-w-[66%]">
             <span className="block overflow-hidden pb-[0.14em] -mb-[0.14em]"><span className="hero-line block">Дигитален</span></span>{' '}
             <span className="block overflow-hidden pb-[0.14em] -mb-[0.14em]"><span className="hero-line block">маркетинг и</span></span>{' '}
             <span className="block overflow-hidden pb-[0.14em] -mb-[0.14em]"><span className="hero-line block text-[#DC2626]">бизнес развитие</span></span>

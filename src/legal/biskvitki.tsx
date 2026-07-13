@@ -30,7 +30,7 @@ createRoot(document.getElementById('root')!).render(
     <h2 className="text-xl font-semibold text-[#1A1A1A] mt-6 mb-2">Контакт</h2>
     <p>
       Ако имате въпроси относно бисквитките, свържете се с нас на{' '}
-      <a href="mailto:info@justpablo.bg" className="text-[#DC2626] hover:underline">info@justpablo.bg</a>.
+      <a href="mailto:adsjustpablo@gmail.com" className="text-[#DC2626] hover:underline">adsjustpablo@gmail.com</a>.
     </p>
   </LegalLayout>,
 )

@@ -24,7 +24,7 @@ createRoot(document.getElementById('root')!).render(
     <h2 className="text-xl font-semibold text-[#1A1A1A] mt-6 mb-2">Вашите права</h2>
     <p>
       Имате право на достъп, корекция или изтриване на личните си данни, както и право да възразите срещу тяхната обработка. За това можете да се свържете с нас на{' '}
-      <a href="mailto:info@justpablo.bg" className="text-[#DC2626] hover:underline">info@justpablo.bg</a>.
+      <a href="mailto:adsjustpablo@gmail.com" className="text-[#DC2626] hover:underline">adsjustpablo@gmail.com</a>.
     </p>
   </LegalLayout>,
 )

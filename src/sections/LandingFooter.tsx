@@ -28,9 +28,8 @@ export default function LandingFooter() {
             </div>
             <div className="lg:col-span-4">
               <div className="text-[10px] uppercase tracking-[0.18em] font-medium text-white/55 mb-4">Контакти</div>
-              <a href="mailto:info@justpablo.bg" className="block text-sm text-[#DC2626] hover:text-white transition-colors mb-2 py-1">info@justpablo.bg</a>
-              <a href="tel:0887654321" className="block text-sm font-light text-white/75 hover:text-white transition-colors mb-2 py-1">0887 654 321</a>
-              <div className="text-sm font-light text-white/60">Варна, ул. Мария Луиза 47</div>
+              <a href="mailto:adsjustpablo@gmail.com" className="block text-sm text-[#DC2626] hover:text-white transition-colors mb-2 py-1">adsjustpablo@gmail.com</a>
+              <div className="text-sm font-light text-white/60">България</div>
             </div>
             <div className="lg:col-span-3">
               <div className="text-[10px] uppercase tracking-[0.18em] font-medium text-white/55 mb-4">Последвайте ни</div>

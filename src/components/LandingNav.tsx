@@ -19,10 +19,10 @@ export default function LandingNav() {
 
       <button
         onClick={() => scrollToId('zapitvane')}
-        className="fixed top-5 right-5 lg:right-8 z-50 inline-flex items-center gap-2 bg-[#DC2626] text-white text-[11px] uppercase tracking-[0.14em] font-medium px-5 py-3 rounded-full shadow-lg shadow-[#DC2626]/25 hover:bg-[#B91C1C] hover:scale-[1.03] active:scale-95 transition-all duration-300"
+        className="fixed top-5 right-5 lg:right-8 z-50 inline-flex items-center gap-2 bg-[#DC2626] text-white text-sm font-semibold px-6 py-3.5 rounded-full shadow-lg shadow-[#DC2626]/25 hover:bg-[#B91C1C] hover:scale-[1.03] active:scale-95 transition-all duration-300 whitespace-nowrap"
       >
         Запитване
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
           <path d="M12 5v14M19 12l-7 7-7-7" strokeLinecap="round" strokeLinejoin="round" />
         </svg>
       </button>
