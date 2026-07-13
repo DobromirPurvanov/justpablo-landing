@@ -12,6 +12,7 @@ import Marquee from './sections/Marquee'
 import ScrollWizard from './components/ScrollWizard'
 import LandingFooter from './sections/LandingFooter'
 import CookieConsent from './components/CookieConsent'
+import StickyPromo from './components/StickyPromo'
 
 gsap.registerPlugin(ScrollTrigger)
 
@@ -49,6 +50,7 @@ export default function App() {
         </section>
       </main>
       <LandingFooter />
+      <StickyPromo />
       <CookieConsent />
     </>
   )
