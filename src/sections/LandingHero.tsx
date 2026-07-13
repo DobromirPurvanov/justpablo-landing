@@ -73,7 +73,7 @@ export default function LandingHero() {
           </h1>
 
           <p className="hero-sub mt-8 text-base lg:text-lg font-light text-[#1A1A1A]/60 max-w-md leading-relaxed">
-            Агенцията, изградена върху най-голямата инфлуенсър платформа в България. Данни в реално време, native подход и резултати, които се броят.
+            Ние сме агенцията, изградена върху най-голямата инфлуенсър платформа в България. Работим с данни в реално време и native подход, а резултатите се броят.
           </p>
 
           <PromoCountdown className="mt-8" />

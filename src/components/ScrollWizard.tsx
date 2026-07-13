@@ -26,13 +26,13 @@ type Question = {
 
 const questions: Question[] = [
   { id: 'brandName', short: 'Дейност', title: 'Каква е дейността на вашата марка?', subtitle: 'Нека се запознаем. Попълването на всички стъпки отнема само минута.', type: 'text', placeholder: 'предмет на дейност' },
-  { id: 'focus', short: 'Фокус', title: 'Какъв е фокусът на вашия бизнес?', subtitle: 'Натиснете върху опция, за да я изберете — можете да маркирате повече от една.', type: 'checkbox', options: ['Услуга/и', 'Продукт/и собствено производство', 'Търговия или дистрибуция', 'Друго'], skippable: true },
-  { id: 'goals', short: 'Цели', title: 'Какви са вашите цели за онлайн развитие?', subtitle: 'Натиснете върху опция, за да я изберете — можете да маркирате повече от една.', type: 'checkbox', options: ['Разпознаваемост', 'Продажби', 'Абонаменти', 'Подготовка за експанзия', 'Друго'], skippable: true },
+  { id: 'focus', short: 'Фокус', title: 'Какъв е фокусът на вашия бизнес?', subtitle: 'Натиснете върху опция, за да я изберете. Можете да маркирате повече от една.', type: 'checkbox', options: ['Услуга/и', 'Продукт/и собствено производство', 'Търговия или дистрибуция', 'Друго'], skippable: true },
+  { id: 'goals', short: 'Цели', title: 'Какви са вашите цели за онлайн развитие?', subtitle: 'Натиснете върху опция, за да я изберете. Можете да маркирате повече от една.', type: 'checkbox', options: ['Разпознаваемост', 'Продажби', 'Абонаменти', 'Подготовка за експанзия', 'Друго'], skippable: true },
   { id: 'period', short: 'Период', title: 'За какъв период очаквате резултати?', subtitle: 'Натиснете върху един отговор, за да продължите.', type: 'radio', options: ['3 месеца', '6 месеца', '1 година', '2+ години'] },
-  { id: 'needs', short: 'Услуги', title: 'От какви услуги имате нужда?', subtitle: 'Натиснете върху опция, за да я изберете — можете да маркирате повече от една.', type: 'checkbox', options: ['Нов уебсайт', 'SEO и GEO (видимост в AI)', 'Онлайн реклама', 'Брандинг и дизайн', 'Социални мрежи и видео'], skippable: true },
+  { id: 'needs', short: 'Услуги', title: 'От какви услуги имате нужда?', subtitle: 'Натиснете върху опция, за да я изберете. Можете да маркирате повече от една.', type: 'checkbox', options: ['Нов уебсайт', 'SEO и GEO (видимост в AI)', 'Онлайн реклама', 'Брандинг и дизайн', 'Социални мрежи и видео'], skippable: true },
   { id: 'budget', short: 'Бюджет', title: 'Какъв е предвиденият бюджет?', subtitle: 'Натиснете върху един отговор, за да продължите.', type: 'radio', options: ['До 500 €', '500 – 1500 €', '1500 – 2500 €', '2500 – 5000 €', 'Над 5000 €'] },
   { id: 'contact', short: 'Контакт', title: 'Информация за контакт', subtitle: 'Ще се свържем с вас в рамките на 24 часа.', type: 'contact' },
-  { id: 'review', short: 'Преглед', title: 'Прегледайте и изпратете', subtitle: 'Проверете отговорите си — всяка стъпка може да се редактира.', type: 'review' },
+  { id: 'review', short: 'Преглед', title: 'Прегледайте и изпратете', subtitle: 'Проверете отговорите си. Всяка стъпка може да се редактира.', type: 'review' },
 ]
 
 const contactFields = [
@@ -599,7 +599,7 @@ export default function ScrollWizard() {
       <div ref={rootRef} className="bg-white min-h-[85vh] supports-[height:100svh]:min-h-[85svh] flex items-center py-14 relative">
         {resume && (
           <div className="fixed top-24 left-1/2 -translate-x-1/2 z-[80] bg-[#1A1A1A] text-white pl-5 pr-3 py-3 rounded-lg shadow-xl flex items-center gap-4 text-sm max-w-[calc(100vw-32px)]" role="status">
-            <span className="font-light">Имате запазен прогрес — стъпка {Math.min((resume.current ?? 0) + 1, questions.length)}.</span>
+            <span className="font-light">Имате запазен прогрес до стъпка {Math.min((resume.current ?? 0) + 1, questions.length)}.</span>
             <button type="button" onClick={() => { setFormData(resume.formData || {}); setCurrent(Math.min(resume.current ?? 0, questions.length - 1)); setPhase(resume.phase === 'wizard' ? 'wizard' : 'intro'); setResume(null) }} className="shrink-0 bg-[#DC2626] hover:bg-[#B91C1C] px-3.5 py-1.5 rounded-md font-medium transition-colors">Продължи</button>
             <button type="button" onClick={() => { clearSaved(); setResume(null) }} className="shrink-0 text-white/60 hover:text-white px-1 py-1.5 transition-colors">Отначало</button>
           </div>
@@ -612,8 +612,8 @@ export default function ScrollWizard() {
                   Какъв е вашият бизнес?
                 </h1>
                 <div className="flex flex-col gap-5 text-base lg:text-lg font-light italic text-[#1A1A1A]/70 leading-relaxed max-w-md">
-                  <p>Изпращането на запитване не ви ангажира с нас, но ви гарантира, че ще се запознаем в детайли с вашия бизнес.</p>
-                  <p>Така, когато ви се обадим за среща, ще влезем на нея подготвени и още от първия разговор ще ви бъдем полезни — с конкретни предложения, параметри и анализи.</p>
+                  <p>Запитването не ви обвързва с нищо, но ни дава време да се запознаем в детайли с вашия бизнес.</p>
+                  <p>Така, когато се чуем за среща, ще сме подготвени и още от първия разговор ще сме ви полезни с конкретни предложения, параметри и анализи.</p>
                 </div>
               </div>
               <div className="lg:col-span-7 flex justify-center">
