@@ -3,234 +3,488 @@ import gsap from 'gsap'
 import { maskReveal } from '../lib/motion'
 import LogoFace from './LogoFace'
 
-const questions = [
-  { id: 'brandName', title: 'Каква е дейността на вашата марка?', subtitle: 'Нека се запознаем. След този въпрос имаме още няколко, които ще ни помогнат да научим повече за вас. Попълването им отнема само минута.', type: 'text', placeholder: 'предмет на дейност' },
-  { id: 'focus', title: 'Какъв е фокусът на вашия бизнес?', subtitle: 'Можете да маркирате повече от един отговор.', type: 'checkbox', options: ['Услуга/и', 'Продукт/и собствено производство', 'Търговия или дистрибуция'] },
-  { id: 'goals', title: 'Какви са вашите цели за онлайн развитие?', type: 'radio', options: ['Разпознаваемост', 'Продажби', 'Абонаменти', 'Подготовка за експанзия'] },
-  { id: 'period', title: 'За какъв период очаквате резултати?', type: 'radio', options: ['3 месеца', '6 месеца', '1 година', '2+ години'] },
-  { id: 'needs', title: 'От какви услуги имате нужда?', subtitle: 'Можете да маркирате повече от един отговор.', type: 'checkbox', options: ['Нов уебсайт', 'SEO и GEO (видимост в AI)', 'Онлайн реклама', 'Брандинг и дизайн', 'Социални мрежи и видео'] },
-  { id: 'budget', title: 'Какъв е предвиденият бюджет?', type: 'radio', options: ['До 500 €', '500 – 1500 €', '1500 – 2500 €', '2500 – 5000 €', 'Над 5000 €'] },
-  { id: 'contact', title: 'Информация за контакт', subtitle: 'След като изпратите запитването, ще се запознаем с детайлите и ще се свържем с вас в рамките на 24 часа.', type: 'contact' },
+/* ────────────────────────────────────────────────────────────
+   Кръгла контактна форма (progressive disclosure)
+   Кръгът е запазен като запазена марка; вътре: зони, ring
+   progress с точки, хоризонтални pill бутони, валидация,
+   auto-save в localStorage, стъпков индикатор на мобилно.
+   ──────────────────────────────────────────────────────────── */
+
+const STORAGE_KEY = 'justpablo_form_progress'
+
+type QType = 'text' | 'checkbox' | 'radio' | 'contact' | 'review'
+type Question = {
+  id: string
+  short: string
+  title: string
+  subtitle?: string
+  type: QType
+  options?: string[]
+  placeholder?: string
+  skippable?: boolean
+}
+
+const questions: Question[] = [
+  { id: 'brandName', short: 'Дейност', title: 'Каква е дейността на вашата марка?', subtitle: 'Нека се запознаем. Попълването на всички стъпки отнема само минута.', type: 'text', placeholder: 'предмет на дейност' },
+  { id: 'focus', short: 'Фокус', title: 'Какъв е фокусът на вашия бизнес?', subtitle: 'Можете да маркирате повече от един отговор.', type: 'checkbox', options: ['Услуга/и', 'Продукт/и собствено производство', 'Търговия или дистрибуция', 'Друго'], skippable: true },
+  { id: 'goals', short: 'Цели', title: 'Какви са вашите цели за онлайн развитие?', subtitle: 'Можете да маркирате повече от един отговор.', type: 'checkbox', options: ['Разпознаваемост', 'Продажби', 'Абонаменти', 'Подготовка за експанзия', 'Друго'], skippable: true },
+  { id: 'period', short: 'Период', title: 'За какъв период очаквате резултати?', type: 'radio', options: ['3 месеца', '6 месеца', '1 година', '2+ години'] },
+  { id: 'needs', short: 'Услуги', title: 'От какви услуги имате нужда?', subtitle: 'Можете да маркирате повече от един отговор.', type: 'checkbox', options: ['Нов уебсайт', 'SEO и GEO (видимост в AI)', 'Онлайн реклама', 'Брандинг и дизайн', 'Социални мрежи и видео'], skippable: true },
+  { id: 'budget', short: 'Бюджет', title: 'Какъв е предвиденият бюджет?', type: 'radio', options: ['До 500 €', '500 – 1500 €', '1500 – 2500 €', '2500 – 5000 €', 'Над 5000 €'] },
+  { id: 'contact', short: 'Контакт', title: 'Информация за контакт', subtitle: 'Ще се свържем с вас в рамките на 24 часа.', type: 'contact' },
+  { id: 'review', short: 'Преглед', title: 'Прегледайте и изпратете', subtitle: 'Проверете отговорите си — всяка стъпка може да се редактира.', type: 'review' },
 ]
 
-const categories = ['Бизнес', 'Цели', 'Ресурси', 'Изпращане']
-const catOf = (i: number) => (i <= 1 ? 0 : i <= 3 ? 1 : i <= 5 ? 2 : 3)
+const contactFields = [
+  { id: 'name', type: 'text', label: 'име и фамилия *', auto: 'name', hint: 'next' as const, required: true },
+  { id: 'email', type: 'email', label: 'e-mail адрес *', auto: 'email', hint: 'next' as const, required: true },
+  { id: 'phone', type: 'tel', label: 'телефон (по избор)', auto: 'tel', hint: 'next' as const, required: false },
+  { id: 'site', type: 'text', label: 'име на бизнес / сайт (по избор)', auto: 'organization', hint: 'done' as const, required: false },
+]
 
-/* Леки line-art скици по категория — запълват кръга (almero стил) */
-function CategoryGlyph({ cat }: { cat: number }) {
-  const common = { fill: 'none', strokeWidth: 1.6, strokeLinecap: 'round' as const, strokeLinejoin: 'round' as const }
+const prefersReduced = () => window.matchMedia('(prefers-reduced-motion: reduce)').matches
+
+/* Малки иконки по стъпка (зона А) — червени, 48px */
+function StepGlyph({ step }: { step: number }) {
+  const c = { fill: 'none', stroke: '#DC2626', strokeWidth: 1.8, strokeLinecap: 'round' as const, strokeLinejoin: 'round' as const }
   return (
-    <svg width="84" height="84" viewBox="0 0 64 64" className="mb-8" aria-hidden="true">
-      {cat === 0 && (<g>
-        <path d="M12 26 L12 50 L52 50 L52 26" stroke="#1A1A1A" opacity="0.14" {...common} />
-        <path d="M8 26 L14 14 L50 14 L56 26 Q52 32 46 26 Q42 32 36 26 Q32 32 26 26 Q22 32 16 26 Q12 32 8 26 Z" stroke="#1A1A1A" opacity="0.14" {...common} />
-        <path d="M26 50 L26 38 L38 38 L38 50" stroke="#DC2626" opacity="0.45" {...common} />
-      </g>)}
-      {cat === 1 && (<g>
-        <circle cx="32" cy="32" r="20" stroke="#1A1A1A" opacity="0.14" {...common} />
-        <circle cx="32" cy="32" r="11" stroke="#1A1A1A" opacity="0.14" {...common} />
-        <path d="M32 32 L52 12 M52 12 L44 13 M52 12 L51 20" stroke="#DC2626" opacity="0.45" {...common} />
-      </g>)}
-      {cat === 2 && (<g>
-        <ellipse cx="32" cy="20" rx="17" ry="6" stroke="#1A1A1A" opacity="0.14" {...common} />
-        <path d="M15 20 V32 C15 35.3 22.6 38 32 38 C41.4 38 49 35.3 49 32 V20" stroke="#1A1A1A" opacity="0.14" {...common} />
-        <path d="M15 32 V44 C15 47.3 22.6 50 32 50 C41.4 50 49 47.3 49 44 V32" stroke="#DC2626" opacity="0.4" {...common} />
-      </g>)}
-      {cat === 3 && (<g>
-        <path d="M8 30 L56 12 L40 54 L30 38 Z" stroke="#1A1A1A" opacity="0.14" {...common} />
-        <path d="M30 38 L56 12" stroke="#DC2626" opacity="0.45" {...common} />
-      </g>)}
+    <svg width="44" height="44" viewBox="0 0 24 24" aria-hidden="true">
+      {step === 0 && (<g {...c}><path d="M4 20l1-4L16.5 4.5a2.1 2.1 0 013 3L8 19l-4 1z" /><path d="M14 6l3 3" /></g>)}
+      {step === 1 && (<g {...c}><circle cx="12" cy="12" r="8.5" /><circle cx="12" cy="12" r="4.5" /><circle cx="12" cy="12" r="0.8" fill="#DC2626" /></g>)}
+      {step === 2 && (<g {...c}><path d="M4 17l5-5 3.5 3.5L20 8" /><path d="M15 8h5v5" /></g>)}
+      {step === 3 && (<g {...c}><rect x="4" y="5.5" width="16" height="15" rx="2.5" /><path d="M4 10h16M8.5 3.5v3.5M15.5 3.5v3.5" /></g>)}
+      {step === 4 && (<g {...c}><path d="M12 3.5l8.5 4.5L12 12.5 3.5 8 12 3.5z" /><path d="M3.5 12.5L12 17l8.5-4.5" /><path d="M3.5 16.5L12 21l8.5-4.5" /></g>)}
+      {step === 5 && (<g {...c}><rect x="3.5" y="6.5" width="17" height="12.5" rx="2.5" /><path d="M3.5 10.5h17" /><path d="M7 15.5h4" /></g>)}
+      {step === 6 && (<g {...c}><circle cx="12" cy="8.2" r="3.8" /><path d="M5 20c1.2-3.6 3.9-5.3 7-5.3s5.8 1.7 7 5.3" /></g>)}
+      {step === 7 && (<g {...c}><circle cx="12" cy="12" r="8.5" /><path d="M8.3 12.3l2.5 2.5 5-5.3" /></g>)}
     </svg>
   )
 }
 
+/* Ring progress + точки по периметъра (около кръга) */
+function ProgressRing({ current, total }: { current: number; total: number }) {
+  const pct = (current / (total - 1)) * 100
+  const dots = Array.from({ length: total }, (_, i) => {
+    const a = (-90 + (i * 360) / total) * (Math.PI / 180)
+    return { x: 54 + 50 * Math.cos(a), y: 54 + 50 * Math.sin(a), done: i <= current }
+  })
+  return (
+    <svg className="absolute inset-0 w-full h-full pointer-events-none -rotate-0" viewBox="0 0 108 108" aria-hidden="true">
+      <circle cx="54" cy="54" r="50" fill="none" stroke="#E5E5E5" strokeWidth="1.1" />
+      <g transform="rotate(-90 54 54)">
+        <circle
+          cx="54" cy="54" r="50" fill="none" stroke="#DC2626" strokeWidth="1.1" strokeLinecap="round"
+          pathLength="100" strokeDasharray="100"
+          className="wz-ring-progress"
+          style={{ strokeDashoffset: 100 - pct }}
+        />
+      </g>
+      {dots.map((d, i) => (
+        <circle key={i} cx={d.x} cy={d.y} r="2.1"
+          fill={d.done ? '#DC2626' : '#FFFFFF'}
+          stroke={d.done ? '#DC2626' : '#E5E5E5'} strokeWidth="1" />
+      ))}
+    </svg>
+  )
+}
+
+/* Конфети от центъра на успеха — без зависимости, ~1.5s */
+function ConfettiBurst() {
+  const ref = useRef<HTMLCanvasElement>(null)
+  useEffect(() => {
+    if (prefersReduced()) return
+    const canvas = ref.current
+    if (!canvas) return
+    const ctx = canvas.getContext('2d')
+    if (!ctx) return
+    canvas.width = window.innerWidth
+    canvas.height = window.innerHeight
+    const colors = ['#DC2626', '#1A1A1A', '#E5E5E5', '#B91C1C']
+    const cx = canvas.width / 2
+    const cy = Math.min(canvas.height * 0.42, 420)
+    const parts = Array.from({ length: 110 }, () => ({
+      x: cx, y: cy,
+      vx: (Math.random() - 0.5) * 13,
+      vy: -Math.random() * 11 - 3,
+      s: Math.random() * 6 + 3,
+      r: Math.random() * Math.PI,
+      vr: (Math.random() - 0.5) * 0.3,
+      c: colors[Math.floor(Math.random() * colors.length)],
+    }))
+    const t0 = performance.now()
+    let raf = 0
+    const tick = (t: number) => {
+      const el = t - t0
+      ctx.clearRect(0, 0, canvas.width, canvas.height)
+      parts.forEach(p => {
+        p.x += p.vx; p.y += p.vy; p.vy += 0.32; p.r += p.vr
+        ctx.save(); ctx.translate(p.x, p.y); ctx.rotate(p.r)
+        ctx.globalAlpha = Math.max(0, 1 - el / 1500)
+        ctx.fillStyle = p.c; ctx.fillRect(-p.s / 2, -p.s / 2, p.s, p.s * 0.62)
+        ctx.restore()
+      })
+      if (el < 1500) raf = requestAnimationFrame(tick)
+      else ctx.clearRect(0, 0, canvas.width, canvas.height)
+    }
+    raf = requestAnimationFrame(tick)
+    return () => cancelAnimationFrame(raf)
+  }, [])
+  return <canvas ref={ref} className="fixed inset-0 z-[60] pointer-events-none" aria-hidden="true" />
+}
+
 const isAnswered = (data: Record<string, unknown>, id: string) => {
-  if (id === 'contact') {
-    return Boolean(data.name && String(data.name).trim() && data.email && String(data.email).trim())
-  }
   const v = data[id]
   return Array.isArray(v) ? v.length > 0 : Boolean(v && String(v).trim())
 }
+const emailOk = (v: string) => /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(v.trim())
 
 export default function ScrollWizard() {
   const [phase, setPhase] = useState<'intro' | 'wizard'>('intro')
   const [current, setCurrent] = useState(0)
   const [formData, setFormData] = useState<Record<string, any>>({})
   const [isSuccess, setIsSuccess] = useState(false)
+  const [stepError, setStepError] = useState('')
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({})
+  const [resume, setResume] = useState<{ formData: Record<string, any>; current: number; phase: 'intro' | 'wizard' } | null>(null)
   const rootRef = useRef<HTMLDivElement>(null)
   const animating = useRef(false)
   // На touch устройства не отваряме клавиатурата насила при смяна на стъпка
   const finePointer = useRef(typeof window !== 'undefined' && window.matchMedia('(pointer: fine)').matches)
 
+  /* ─── Auto-save: запис при всяка промяна, предложение за продължаване при връщане ─── */
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem(STORAGE_KEY)
+      if (!raw) return
+      const saved = JSON.parse(raw)
+      if (saved && saved.formData && Object.keys(saved.formData).length > 0) setResume(saved)
+    } catch { /* private mode и т.н. — тихо */ }
+  }, [])
+
+  useEffect(() => {
+    if (isSuccess) return
+    try {
+      if (Object.keys(formData).length > 0 || phase === 'wizard') {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify({ v: 1, formData, current, phase }))
+      }
+    } catch { /* няма localStorage — формата работи и без него */ }
+  }, [formData, current, phase, isSuccess])
+
+  const clearSaved = () => { try { localStorage.removeItem(STORAGE_KEY) } catch { /* noop */ } }
+
   useEffect(() => {
     const el = rootRef.current
-    if (el) maskReveal(el.querySelector('.wz-h1'), null, { delay: 0.1 })
+    if (el && phase === 'intro' && !isSuccess) maskReveal(el.querySelector('.wz-h1'), null, { delay: 0.1 })
   }, [phase, isSuccess])
 
-  const setValue = (id: string, value: any) => setFormData(prev => ({ ...prev, [id]: value }))
+  const setValue = (id: string, value: any) => {
+    setFormData(prev => ({ ...prev, [id]: value }))
+    setStepError('')
+    setFieldErrors(prev => { const n = { ...prev }; delete n[id]; return n })
+  }
   const toggleCheckbox = (id: string, option: string) => {
     const arr = (formData[id] as string[]) || []
     setValue(id, arr.includes(option) ? arr.filter(o => o !== option) : [...arr, option])
   }
 
+  const shake = () => {
+    if (prefersReduced()) return
+    const targets = gsap.utils.toArray<HTMLElement>('.wz-shake', rootRef.current)
+    if (targets.length) gsap.fromTo(targets, { x: 0 }, { keyframes: [{ x: -5 }, { x: 5 }, { x: -4 }, { x: 0 }], duration: 0.3, ease: 'power1.inOut' })
+  }
+
   const startWizard = (brandType: string) => {
     setValue('brandType', brandType)
     const el = rootRef.current
-    if (!el || window.matchMedia('(prefers-reduced-motion: reduce)').matches) { setPhase('wizard'); return }
+    if (!el || prefersReduced()) { setPhase('wizard'); return }
     gsap.to(el, { opacity: 0, y: -20, duration: 0.3, ease: 'power2.in', onComplete: () => {
       setPhase('wizard')
       gsap.fromTo(el, { opacity: 0, y: 24 }, { opacity: 1, y: 0, duration: 0.5, ease: 'power3.out', clearProps: 'transform' })
     }})
   }
 
+  /* Смяна на стъпка: изходяща scale 1→0.95 + fade, входяща 0.95→1 (по спека) */
   const go = (target: number) => {
     if (target < 0 || target > questions.length - 1 || target === current || animating.current) return
+    setStepError('')
     const items = gsap.utils.toArray<HTMLElement>('.wz-anim', rootRef.current)
-    const dir = target > current ? 1 : -1
-    if (!items.length || window.matchMedia('(prefers-reduced-motion: reduce)').matches) { setCurrent(target); return }
+    if (!items.length || prefersReduced()) { setCurrent(target); return }
     animating.current = true
-    gsap.to(items, { y: -24 * dir, opacity: 0, duration: 0.22, ease: 'power2.in', onComplete: () => {
+    gsap.to(items, { opacity: 0, scale: 0.95, duration: 0.25, ease: 'power2.in', onComplete: () => {
       setCurrent(target)
       requestAnimationFrame(() => {
         const fresh = gsap.utils.toArray<HTMLElement>('.wz-anim', rootRef.current)
-        gsap.fromTo(fresh, { y: 28 * dir, opacity: 0 }, { y: 0, opacity: 1, duration: 0.45, ease: 'power3.out', clearProps: 'transform', onComplete: () => { animating.current = false } })
+        gsap.fromTo(fresh, { opacity: 0, scale: 0.95 }, { opacity: 1, scale: 1, duration: 0.35, delay: 0.1, ease: 'power3.out', clearProps: 'transform', onComplete: () => { animating.current = false } })
       })
     }})
   }
-  const next = () => go(current + 1)
-  const prev = () => go(current - 1)
 
   const q = questions[current]
-  const isLast = current === questions.length - 1
-  const canSubmit = isAnswered(formData, 'email') && isAnswered(formData, 'name')
+  const isReview = q.type === 'review'
 
-  /* ─── Отговорът (вътре в кръга на desktop / плоско на мобилно) ─── */
+  /* ─── Валидация: „Напред" винаги е активен; грешката се показва, кръгът трепва ─── */
+  const validateStep = (i: number): boolean => {
+    const qq = questions[i]
+    if (qq.type === 'checkbox' || qq.type === 'radio') {
+      if (!isAnswered(formData, qq.id)) {
+        setStepError('Моля, изберете поне един отговор, за да продължите.')
+        shake()
+        return false
+      }
+    }
+    if (qq.type === 'contact') {
+      const errs: Record<string, string> = {}
+      if (!formData.name || !String(formData.name).trim()) errs.name = 'Моля, въведете име и фамилия.'
+      if (!formData.email || !String(formData.email).trim()) errs.email = 'Моля, въведете e-mail адрес.'
+      else if (!emailOk(String(formData.email))) errs.email = 'E-mail адресът не изглежда валиден.'
+      if (Object.keys(errs).length) {
+        setFieldErrors(errs)
+        shake()
+        const first = contactFields.find(f => errs[f.id])
+        if (first) (rootRef.current?.querySelector(`[data-field="${first.id}"]`) as HTMLInputElement | null)?.focus()
+        return false
+      }
+    }
+    return true
+  }
+
+  const next = () => { if (validateStep(current)) go(current + 1) }
+  const prev = () => go(current - 1)
+  const skip = () => { setStepError(''); go(current + 1) }
+
+  const submit = () => {
+    if (!formData.privacy) {
+      setStepError('Моля, потвърдете, че сте съгласни с политиката за поверителност.')
+      shake()
+      return
+    }
+    clearSaved()
+    setIsSuccess(true)
+  }
+
+  const resetAll = () => {
+    clearSaved()
+    setFormData({}); setFieldErrors({}); setStepError('')
+    setCurrent(0); setIsSuccess(false); setPhase('intro')
+  }
+
+  /* ─── Опция (radio/checkbox) — кутийка по спека, 48px touch target ─── */
+  const OptionButton = ({ opt, selected, onClick, role }: { opt: string; selected: boolean; onClick: () => void; role: 'radio' | 'checkbox' }) => (
+    <button
+      type="button"
+      role={role}
+      aria-checked={selected}
+      onClick={onClick}
+      className={`w-full min-h-[48px] px-4 py-3 rounded-[10px] border-2 flex items-center justify-center gap-3 text-[15px] font-medium leading-snug transition-all duration-200 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#DC2626] ${
+        selected
+          ? 'border-[#DC2626] bg-[#FFF5F5] text-[#1A1A1A] shadow-[0_0_0_3px_rgba(220,38,38,0.1)]'
+          : 'border-[#E5E5E5] bg-white text-[#1A1A1A]/80 hover:border-[#DC2626] hover:bg-[#FFF5F5]'
+      }`}
+    >
+      <span className={`shrink-0 flex items-center justify-center transition-colors duration-200 ${role === 'checkbox' ? 'w-5 h-5 rounded-[5px] border-2' : 'w-5 h-5 rounded-full border-2'} ${selected ? 'bg-[#DC2626] border-[#DC2626]' : 'border-[#1A1A1A]/25 bg-white'}`}>
+        {selected && (role === 'checkbox'
+          ? <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="3.5"><polyline points="20 6 9 17 4 12" /></svg>
+          : <span className="w-1.5 h-1.5 rounded-full bg-white" />)}
+      </span>
+      <span className="text-left">{opt}</span>
+    </button>
+  )
+
+  /* ─── Зона Б: съдържанието на активната стъпка ─── */
   const answerArea = (
-    <div className="w-full max-w-md mx-auto text-center">
+    <div className="w-full">
       {q.type === 'radio' && q.options && (
-        <div className="flex flex-col items-center gap-2">
-          {q.options.map(opt => {
-            const selected = formData[q.id] === opt
-            return (
-              <button
-                key={opt}
-                aria-pressed={selected}
-                onClick={() => { setValue(q.id, opt); window.setTimeout(next, 300) }}
-                className="group flex items-center gap-3 text-left py-2 min-h-[44px]"
-              >
-                <span className={`transition-all duration-300 ${selected ? 'opacity-100 translate-x-0' : 'opacity-0 -translate-x-2 group-hover:opacity-60 group-hover:translate-x-0'}`}>
-                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#DC2626" strokeWidth="3">
-                    <path d="M5 12h14M13 6l6 6-6 6" strokeLinecap="round" strokeLinejoin="round" />
-                  </svg>
-                </span>
-                <span className={`text-lg lg:text-xl font-bold transition-colors duration-300 ${selected ? 'text-[#1A1A1A]' : 'text-[#1A1A1A]/75 group-hover:text-[#1A1A1A]'}`}>
-                  {opt}
-                </span>
-              </button>
-            )
-          })}
+        <div role="radiogroup" aria-label={q.title} className="flex flex-col gap-3 w-full">
+          {q.options.map(opt => (
+            <OptionButton key={opt} opt={opt} role="radio" selected={formData[q.id] === opt}
+              onClick={() => { setValue(q.id, opt); window.setTimeout(() => go(current + 1), 280) }} />
+          ))}
         </div>
       )}
 
       {q.type === 'checkbox' && q.options && (
-        <div className="flex flex-col items-start gap-2 w-fit mx-auto">
-          {q.options.map(opt => {
-            const selected = ((formData[q.id] as string[]) || []).includes(opt)
-            return (
-              <button
-                key={opt}
-                aria-pressed={selected}
-                onClick={() => toggleCheckbox(q.id, opt)}
-                className="group flex items-center gap-3.5 text-left py-2 min-h-[44px]"
-              >
-                <span className={`w-[22px] h-[22px] rounded-[5px] border-2 flex items-center justify-center shrink-0 transition-all duration-300 ${selected ? 'bg-[#DC2626] border-[#DC2626]' : 'border-[#1A1A1A]/25 group-hover:border-[#DC2626]'}`}>
-                  {selected && (
-                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="3.5">
-                      <polyline points="20 6 9 17 4 12" />
-                    </svg>
-                  )}
-                </span>
-                <span className={`text-lg lg:text-xl font-bold transition-colors duration-300 ${selected ? 'text-[#1A1A1A]' : 'text-[#1A1A1A]/75 group-hover:text-[#1A1A1A]'}`}>
-                  {opt}
-                </span>
-              </button>
-            )
-          })}
+        <div role="group" aria-label={q.title} className="flex flex-col gap-3 w-full">
+          {q.options.map(opt => (
+            <OptionButton key={opt} opt={opt} role="checkbox" selected={((formData[q.id] as string[]) || []).includes(opt)}
+              onClick={() => toggleCheckbox(q.id, opt)} />
+          ))}
         </div>
       )}
 
-      {(q.type === 'text' || q.type === 'email' || q.type === 'tel') && (
+      {q.type === 'text' && (
         <div>
           <input
-            type={q.type}
+            type="text"
             value={formData[q.id] || ''}
             onChange={e => setValue(q.id, e.target.value)}
-            onKeyDown={e => { if (e.key === 'Enter' && !isLast) next() }}
+            onKeyDown={e => { if (e.key === 'Enter') next() }}
+            onFocus={e => { if (!finePointer.current) e.target.scrollIntoView({ behavior: 'smooth', block: 'center' }) }}
             autoFocus={finePointer.current}
             enterKeyHint="next"
-            className="w-full bg-transparent border-b-2 border-[#DC2626] px-0 py-3 text-xl lg:text-2xl font-light text-[#1A1A1A] text-center outline-none focus-visible:outline-none"
+            aria-label={q.placeholder}
+            className="w-full bg-transparent border-b-2 border-[#1A1A1A]/25 focus:border-[#DC2626] px-0 py-3 text-lg lg:text-xl font-light text-[#1A1A1A] text-center outline-none transition-colors duration-200"
           />
-          <div className="text-sm font-light text-[#1A1A1A]/70 mt-3">{q.placeholder}</div>
+          <div className="text-sm font-light text-[#1A1A1A]/70 mt-3 text-center">{q.placeholder}</div>
         </div>
       )}
 
       {q.type === 'contact' && (
-        <div className="flex flex-col gap-6 w-full max-w-xs mx-auto">
-          {[
-            { id: 'name', type: 'text', label: 'име и фамилия', auto: 'name', hint: 'next' as const },
-            { id: 'email', type: 'email', label: 'e-mail адрес', auto: 'email', hint: 'next' as const },
-            { id: 'phone', type: 'tel', label: 'телефон', auto: 'tel', hint: 'done' as const },
-          ].map((f, i) => (
+        <div className="flex flex-col gap-5 w-full">
+          {contactFields.map((f, i) => (
             <div key={f.id}>
               <input
                 type={f.type}
+                data-field={f.id}
                 value={formData[f.id] || ''}
                 onChange={e => setValue(f.id, e.target.value)}
+                onFocus={e => { if (!finePointer.current) e.target.scrollIntoView({ behavior: 'smooth', block: 'center' }) }}
                 autoFocus={i === 0 && finePointer.current}
                 autoComplete={f.auto}
                 enterKeyHint={f.hint}
-                className="w-full bg-transparent border-b-2 border-[#DC2626] px-0 py-2 text-lg font-light text-[#1A1A1A] text-center outline-none focus-visible:outline-none"
+                aria-label={f.label}
+                aria-invalid={Boolean(fieldErrors[f.id])}
+                className={`w-full bg-transparent border-b-2 px-0 py-2 text-base lg:text-lg font-light text-[#1A1A1A] text-center outline-none transition-colors duration-200 ${fieldErrors[f.id] ? 'border-[#EF4444]' : 'border-[#1A1A1A]/25 focus:border-[#DC2626]'}`}
               />
-              <div className="text-xs font-light text-[#1A1A1A]/70 mt-2 text-center">{f.label}</div>
+              <div className={`text-xs font-light mt-2 text-center ${fieldErrors[f.id] ? 'text-[#EF4444] font-medium' : 'text-[#1A1A1A]/70'}`}>
+                {fieldErrors[f.id] ? `⚠ ${fieldErrors[f.id]}` : f.label}
+              </div>
             </div>
           ))}
         </div>
       )}
 
-      {isLast && !canSubmit && (
-        <p className="text-xs font-light text-[#1A1A1A]/65 mt-6">Име и e-mail са задължителни.</p>
+      {q.type === 'review' && (
+        <div className="w-full text-left">
+          <ul className="flex flex-col gap-2.5">
+            {[{ short: 'Тип бранд', val: formData.brandType, edit: () => setPhase('intro') },
+              ...questions.slice(0, 7).map((rq, i) => ({
+                short: rq.short,
+                val: rq.type === 'contact'
+                  ? [formData.name, formData.email, formData.phone, formData.site].filter(Boolean).join(' · ')
+                  : Array.isArray(formData[rq.id]) ? (formData[rq.id] as string[]).join(', ') : formData[rq.id],
+                edit: () => go(i),
+              }))].map(row => (
+              <li key={row.short} className="flex items-baseline justify-between gap-3 text-sm border-b border-[#E5E5E5] pb-2">
+                <span className="shrink-0 font-medium text-[#1A1A1A]/60">{row.short}</span>
+                <span className="text-right text-[#1A1A1A] font-light truncate">{row.val || '—'}</span>
+                <button type="button" onClick={row.edit} className="shrink-0 text-xs text-[#DC2626] underline underline-offset-2 hover:no-underline py-1">Редактирай</button>
+              </li>
+            ))}
+          </ul>
+          <button
+            type="button"
+            role="checkbox"
+            aria-checked={Boolean(formData.privacy)}
+            onClick={() => setValue('privacy', !formData.privacy)}
+            className="mt-5 flex items-start gap-3 text-left w-full py-2 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#DC2626]"
+          >
+            <span className={`mt-0.5 w-5 h-5 rounded-[5px] border-2 flex items-center justify-center shrink-0 transition-colors duration-200 ${formData.privacy ? 'bg-[#DC2626] border-[#DC2626]' : 'border-[#1A1A1A]/30 bg-white'}`}>
+              {formData.privacy && <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="3.5"><polyline points="20 6 9 17 4 12" /></svg>}
+            </span>
+            <span className="text-xs font-light text-[#1A1A1A]/70 leading-relaxed">
+              Съгласен съм личните ми данни да бъдат обработени според <a href="./poveritelnost.html" target="_blank" rel="noopener" className="text-[#DC2626] underline underline-offset-2" onClick={e => e.stopPropagation()}>политиката за поверителност</a>.
+            </span>
+          </button>
+        </div>
       )}
 
-      {isLast && (
+      {/* Грешка на стъпката — aria-live за скрийнрийдъри */}
+      <div aria-live="polite" className="min-h-[20px] mt-4">
+        {stepError && <p className="text-sm font-medium text-[#EF4444] text-center">⚠ {stepError}</p>}
+      </div>
+    </div>
+  )
+
+  /* ─── Зона В: навигационни pill бутони — хоризонтални, вътре в кръга/картата ─── */
+  const navButtons = (variant: 'desktop' | 'mobile') => (
+    <div className={variant === 'desktop' ? 'flex items-center justify-center gap-4' : 'flex flex-col gap-3 w-full'}>
+      {variant === 'mobile' && (
         <button
-          onClick={() => canSubmit && setIsSuccess(true)}
-          disabled={!canSubmit}
-          className={`mt-8 inline-flex items-center justify-center gap-2 w-full sm:w-auto px-8 py-3.5 rounded-full text-sm font-medium transition-all duration-300 ${canSubmit ? 'bg-[#DC2626] text-white hover:bg-[#B91C1C] hover:scale-[1.03] active:scale-95' : 'bg-[#1A1A1A]/10 text-[#1A1A1A]/40 cursor-not-allowed'}`}
+          type="button"
+          onClick={isReview ? submit : next}
+          className="w-full h-14 rounded-xl bg-[#DC2626] text-white text-lg font-semibold flex items-center justify-center gap-2 hover:bg-[#B91C1C] active:scale-[0.98] transition-all duration-200 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#DC2626]"
         >
-          Изпрати запитване
+          {isReview ? 'Изпрати запитване' : 'Напред'}
+          {isReview
+            ? <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z" strokeLinecap="round" strokeLinejoin="round" /></svg>
+            : <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M5 12h14M13 6l6 6-6 6" strokeLinecap="round" strokeLinejoin="round" /></svg>}
         </button>
       )}
+      <button
+        type="button"
+        onClick={prev}
+        disabled={current === 0}
+        aria-label="Предишна стъпка"
+        className={`${variant === 'desktop' ? 'w-[120px] h-12' : 'w-full h-12 rounded-xl'} ${variant === 'desktop' ? 'rounded-full' : ''} border-2 border-[#E5E5E5] bg-white text-sm font-medium text-[#1A1A1A]/60 flex items-center justify-center gap-2 transition-all duration-200 ${current === 0 ? 'opacity-40 cursor-not-allowed' : 'hover:border-[#1A1A1A]/30 hover:text-[#1A1A1A] hover:bg-[#F5F5F5] active:scale-[0.98]'} focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#DC2626]`}
+      >
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M19 12H5M11 6l-6 6 6 6" strokeLinecap="round" strokeLinejoin="round" /></svg>
+        Назад
+      </button>
+      {variant === 'desktop' && (
+        <button
+          type="button"
+          onClick={isReview ? submit : next}
+          className={`${isReview ? 'w-[200px] h-[52px]' : 'w-[160px] h-12'} rounded-full bg-[#DC2626] text-white text-base font-semibold flex items-center justify-center gap-2 hover:bg-[#B91C1C] hover:-translate-y-0.5 hover:shadow-[0_4px_12px_rgba(220,38,38,0.3)] active:translate-y-0 active:shadow-none transition-all duration-200 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#DC2626]`}
+        >
+          {isReview ? 'Изпрати запитване' : 'Напред'}
+          {isReview
+            ? <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z" strokeLinecap="round" strokeLinejoin="round" /></svg>
+            : <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M5 12h14M13 6l6 6-6 6" strokeLinecap="round" strokeLinejoin="round" /></svg>}
+        </button>
+      )}
+    </div>
+  )
+
+  const skipLink = q.skippable && (
+    <button type="button" onClick={skip} className="mt-3 text-sm font-light text-[#1A1A1A]/50 underline underline-offset-2 hover:text-[#DC2626] transition-colors py-2 mx-auto block">
+      Пропусни този въпрос
+    </button>
+  )
+
+  /* ─── Зона А: иконка + стъпка ─── */
+  const zoneA = (
+    <div className="flex flex-col items-center gap-2">
+      <StepGlyph step={current} />
+      <div className="text-sm font-medium text-[#1A1A1A]/60">Стъпка {current + 1} от {questions.length}</div>
+    </div>
+  )
+
+  const zoneTitle = (
+    <div className="text-center">
+      <h2 className="text-[clamp(20px,2vw,28px)] font-bold text-[#1A1A1A] leading-[1.3]">{q.title}</h2>
+      {q.subtitle && <p className="text-sm font-light text-[#1A1A1A]/60 mt-2 leading-relaxed">{q.subtitle}</p>}
     </div>
   )
 
   /* ─── Успех ─── */
   if (isSuccess) {
     return (
-      <div ref={rootRef} className="min-h-[80vh] supports-[height:100svh]:min-h-[80svh] flex flex-col items-center justify-center text-center bg-white section-padding">
+      <div ref={rootRef} className="min-h-[80vh] supports-[height:100svh]:min-h-[80svh] flex flex-col items-center justify-center text-center bg-white section-padding py-16">
+        <ConfettiBurst />
         <div className="w-32 lg:w-40 mb-10" aria-hidden="true">
           <LogoFace />
         </div>
         <h1 className="wz-h1 font-thin-display text-[clamp(40px,7vw,84px)] text-[#1A1A1A] leading-none mb-6">Благодарим!</h1>
         <p className="text-base font-light text-[#1A1A1A]/60 max-w-md mb-10">
-          Получихме запитването ви. Ще се запознаем с детайлите и ще се свържем с вас в рамките на 24 часа.
+          Запитването е изпратено. Ще се запознаем с детайлите и ще се свържем с вас в рамките на 24 часа.
         </p>
-        <button
-          onClick={() => { const l = (window as unknown as { __lenis?: { scrollTo: (t: number) => void } }).__lenis; if (l) l.scrollTo(0); else window.scrollTo({ top: 0, behavior: 'smooth' }) }}
-          className="inline-flex items-center gap-2 text-sm uppercase tracking-[0.14em] font-medium text-[#DC2626] hover:gap-3 transition-all duration-300"
-        >
-          Обратно нагоре
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 19V5M5 12l7-7 7 7" strokeLinecap="round" strokeLinejoin="round" /></svg>
-        </button>
+        <div className="flex flex-col sm:flex-row items-center gap-5">
+          <button
+            type="button"
+            onClick={resetAll}
+            className="inline-flex items-center justify-center gap-2 px-7 h-12 rounded-full border-2 border-[#E5E5E5] text-sm font-medium text-[#1A1A1A]/70 hover:border-[#DC2626] hover:text-[#DC2626] active:scale-[0.98] transition-all duration-200"
+          >
+            Изпрати ново запитване
+          </button>
+          <button
+            type="button"
+            onClick={() => { const l = (window as unknown as { __lenis?: { scrollTo: (t: number) => void } }).__lenis; if (l) l.scrollTo(0); else window.scrollTo({ top: 0, behavior: 'smooth' }) }}
+            className="inline-flex items-center gap-2 text-sm uppercase tracking-[0.14em] font-medium text-[#DC2626] hover:gap-3 transition-all duration-300 py-2"
+          >
+            Обратно нагоре
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 19V5M5 12l7-7 7 7" strokeLinecap="round" strokeLinejoin="round" /></svg>
+          </button>
+        </div>
       </div>
     )
   }
@@ -238,7 +492,14 @@ export default function ScrollWizard() {
   /* ─── Интро: Какъв е вашият бизнес? ─── */
   if (phase === 'intro') {
     return (
-      <div ref={rootRef} className="bg-white min-h-[85vh] supports-[height:100svh]:min-h-[85svh] flex items-center py-14">
+      <div ref={rootRef} className="bg-white min-h-[85vh] supports-[height:100svh]:min-h-[85svh] flex items-center py-14 relative">
+        {resume && (
+          <div className="fixed top-5 left-1/2 -translate-x-1/2 z-[80] bg-[#1A1A1A] text-white pl-5 pr-3 py-3 rounded-lg shadow-xl flex items-center gap-4 text-sm max-w-[calc(100vw-32px)]" role="status">
+            <span className="font-light">Имате запазен прогрес — стъпка {Math.min((resume.current ?? 0) + 1, questions.length)}.</span>
+            <button type="button" onClick={() => { setFormData(resume.formData || {}); setCurrent(Math.min(resume.current ?? 0, questions.length - 1)); setPhase(resume.phase === 'wizard' ? 'wizard' : 'intro'); setResume(null) }} className="shrink-0 bg-[#DC2626] hover:bg-[#B91C1C] px-3.5 py-1.5 rounded-md font-medium transition-colors">Продължи</button>
+            <button type="button" onClick={() => { clearSaved(); setResume(null) }} className="shrink-0 text-white/60 hover:text-white px-1 py-1.5 transition-colors">Отначало</button>
+          </div>
+        )}
         <div className="section-padding w-full">
           <div className="container-max">
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
@@ -252,20 +513,20 @@ export default function ScrollWizard() {
                 </div>
               </div>
               <div className="lg:col-span-7 flex justify-center">
-                <div className="relative w-[min(300px,84vw)] md:w-[440px] lg:w-[560px] aspect-square rounded-full border border-[#1A1A1A]/10 flex flex-col items-center justify-center gap-8">
+                <div className="relative w-[min(300px,84vw)] md:w-[440px] lg:w-[560px] aspect-square rounded-full border border-[#1A1A1A]/10 flex flex-col items-center justify-center gap-6 px-8">
                   <svg className="absolute inset-0 w-full h-full pointer-events-none" viewBox="0 0 100 100" aria-hidden="true">
                     <g transform="rotate(35 50 50)">
                       <circle cx="50" cy="50" r="49.6" fill="none" stroke="#DC2626" strokeWidth="0.9" strokeLinecap="round" pathLength="100" strokeDasharray="10 90" />
                     </g>
                   </svg>
-                  {['Съществуващ бранд', 'Стартиращ бранд'].map(opt => (
-                    <button key={opt} onClick={() => startWizard(opt)} className="group flex items-center gap-3 py-2 min-h-[44px]">
+                  {['Съществуващ бранд', 'Стартиращ бранд', 'Личен проект / Инфлуенсър'].map(opt => (
+                    <button key={opt} type="button" onClick={() => startWizard(opt)} className="group flex items-center gap-3 py-2 min-h-[44px] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#DC2626] rounded">
                       <span className="opacity-0 -translate-x-2 group-hover:opacity-100 group-hover:translate-x-0 transition-all duration-300">
                         <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#DC2626" strokeWidth="3">
                           <path d="M5 12h14M13 6l6 6-6 6" strokeLinecap="round" strokeLinejoin="round" />
                         </svg>
                       </span>
-                      <span className="text-lg lg:text-2xl font-bold text-[#1A1A1A] group-hover:text-[#DC2626] transition-colors duration-300">{opt}</span>
+                      <span className="text-lg lg:text-2xl font-bold text-[#1A1A1A] group-hover:text-[#DC2626] transition-colors duration-300 text-center">{opt}</span>
                     </button>
                   ))}
                 </div>
@@ -277,117 +538,104 @@ export default function ScrollWizard() {
     )
   }
 
-  /* ─── Wizard: активен въпрос + призрачни идващи + кръгът сцена ─── */
+  /* ─── Wizard: лява колона с ясни състояния + кръг с ring progress ─── */
   return (
-    <div ref={rootRef} className="bg-white min-h-[92vh] supports-[height:100svh]:min-h-[92svh] py-8 lg:py-10 overflow-x-clip">
+    <div ref={rootRef} className="bg-white min-h-[92vh] supports-[height:100svh]:min-h-[92svh] py-8 lg:py-12 overflow-x-clip">
       <div className="section-padding">
         <div className="container-max">
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 items-start">
-            {/* Категории */}
-            <div className="lg:col-span-2">
-              <div className="flex lg:flex-col gap-4 lg:gap-3 lg:sticky lg:top-28">
-                {categories.map((c, i) => (
-                  <div key={c} className={`flex items-baseline gap-2 text-sm font-medium transition-colors duration-300 ${catOf(current) === i ? 'text-[#DC2626]' : 'text-[#1A1A1A]/65'}`}>
-                    <span className="text-xs">{i + 1}</span>{c}
-                  </div>
-                ))}
-                <span className="lg:hidden ml-auto text-xs font-medium text-[#1A1A1A]/60 self-center" aria-live="polite">
-                  {current + 1} / {questions.length}
-                </span>
-              </div>
-            </div>
-
-            {/* Въпросите: активният тъмен, идващите прозират */}
-            <div className="lg:col-span-4">
-              <div className="wz-anim flex flex-col gap-8 lg:pt-4">
-                <h2 className="wz-h1 text-[clamp(26px,3vw,42px)] font-bold text-[#1A1A1A] leading-tight">
-                  {q.title}
-                </h2>
-                {questions.slice(current + 1, current + 5).map(uq => (
+          {/* Мобилен stepper: номерирани кръгчета, свързани с линия */}
+          <div className="lg:hidden mb-6" role="list" aria-label="Стъпки на запитването">
+            <div className="flex items-center">
+              {questions.map((sq, i) => (
+                <div key={sq.id} role="listitem" aria-current={i === current ? 'step' : undefined} className={`flex items-center ${i < questions.length - 1 ? 'flex-1' : ''}`}>
                   <button
-                    key={uq.id}
-                    onClick={() => go(questions.indexOf(uq))}
-                    className="text-left text-[clamp(22px,2.6vw,34px)] font-bold text-[#1A1A1A]/[0.12] leading-tight hover:text-[#1A1A1A]/30 transition-colors duration-300"
+                    type="button"
+                    onClick={() => { if (i < current) go(i) }}
+                    aria-label={`Стъпка ${i + 1}: ${sq.short}`}
+                    className={`w-7 h-7 rounded-full border-2 flex items-center justify-center text-[11px] font-semibold shrink-0 transition-colors duration-300 ${
+                      i < current ? 'bg-[#DC2626] border-[#DC2626] text-white'
+                      : i === current ? 'bg-[#DC2626] border-[#DC2626] text-white shadow-[0_0_0_3px_rgba(220,38,38,0.15)]'
+                      : 'bg-white border-[#E5E5E5] text-[#1A1A1A]/45'
+                    }`}
                   >
-                    {uq.title}
+                    {i < current
+                      ? <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="3.5"><polyline points="20 6 9 17 4 12" /></svg>
+                      : i + 1}
                   </button>
-                ))}
-              </div>
+                  {i < questions.length - 1 && <span className={`h-0.5 flex-1 mx-1 transition-colors duration-300 ${i < current ? 'bg-[#DC2626]' : 'bg-[#E5E5E5]'}`} />}
+                </div>
+              ))}
+            </div>
+          </div>
 
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 items-center">
+            {/* Лява колона: всички стъпки с ясни състояния (desktop) */}
+            <aside className="hidden lg:block lg:col-span-4">
+              <ol className="flex flex-col gap-5">
+                {questions.map((sq, i) => {
+                  const done = i < current
+                  const active = i === current
+                  return (
+                    <li key={sq.id}>
+                      <button
+                        type="button"
+                        onClick={() => { if (done) go(i) }}
+                        disabled={!done && !active}
+                        aria-current={active ? 'step' : undefined}
+                        className={`group flex items-baseline gap-2.5 text-left transition-colors duration-200 py-0.5 ${done ? 'cursor-pointer' : active ? 'cursor-default' : 'cursor-default'}`}
+                      >
+                        <span className={`text-xs font-semibold w-7 shrink-0 ${active ? 'text-[#DC2626]' : 'text-[#1A1A1A]/40'}`}>{String(i + 1).padStart(2, '0')}.</span>
+                        <span className={`leading-snug transition-colors duration-200 ${
+                          active ? 'text-[#DC2626] text-lg font-bold'
+                          : done ? 'text-[#1A1A1A]/65 text-base font-medium group-hover:text-[#DC2626] group-hover:underline underline-offset-4'
+                          : 'text-[#1A1A1A]/40 text-base font-normal'
+                        }`}>
+                          {active && <span className="inline-block w-2 h-2 rounded-full bg-[#DC2626] mr-2 align-middle" aria-hidden="true" />}
+                          {sq.title}
+                        </span>
+                      </button>
+                    </li>
+                  )
+                })}
+              </ol>
               <div className="mt-10 text-xs font-light text-[#1A1A1A]/65">
-                Предпочитате директно? <a href="mailto:info@justpablo.bg" className="text-[#DC2626] hover:underline">info@justpablo.bg</a>
+                Предпочитате директно? <a href="mailto:info@justpablo.bg" className="text-[#DC2626] hover:underline py-1">info@justpablo.bg</a>
+              </div>
+            </aside>
+
+            {/* Кръгът: ring progress с точки отвън, зони А/Б/В вътре (desktop) */}
+            <div className="hidden lg:flex lg:col-span-8 justify-center xl:justify-end">
+              <div className="wz-shake relative w-[min(46vw,640px)] aspect-square shrink-0">
+                <ProgressRing current={current} total={questions.length} />
+                <div className="absolute inset-[4.5%] rounded-full bg-white border border-[#E5E5E5] shadow-[0_8px_40px_rgba(0,0,0,0.08)]">
+                  <div className="wz-anim absolute inset-0 flex flex-col items-center justify-between pt-[9%] pb-[8%] px-[13%]">
+                    {zoneA}
+                    <div className="w-full max-w-[420px] flex flex-col items-center gap-5 my-3 overflow-y-auto">
+                      {zoneTitle}
+                      {answerArea}
+                      {skipLink}
+                    </div>
+                    {navButtons('desktop')}
+                  </div>
+                </div>
               </div>
             </div>
 
-            {/* Кръгът — сцената за отговора (desktop) */}
-            <div className="lg:col-span-6 hidden lg:flex justify-center xl:justify-end">
-              <div className="relative w-[min(52vw,740px)] aspect-square shrink-0">
-                {/* Кръгът се пълни с напредъка */}
-                <div className="absolute inset-0 rounded-full border border-[#1A1A1A]/10" />
-                <svg className="absolute inset-0 w-full h-full pointer-events-none -rotate-90" viewBox="0 0 100 100">
-                  <circle
-                    cx="50" cy="50" r="49.6" fill="none"
-                    stroke="#DC2626" strokeWidth="0.9" strokeLinecap="round"
-                    pathLength="100"
-                    style={{
-                      strokeDasharray: `${((current + 1) / questions.length) * 100} ${100 - ((current + 1) / questions.length) * 100}`,
-                      transition: 'stroke-dasharray 0.7s cubic-bezier(0.4, 0, 0.2, 1)',
-                    }}
-                  />
-                </svg>
-
-                {/* Съдържание в кръга */}
-                <div className="wz-anim absolute inset-0 flex flex-col items-center justify-center px-[12%]">
-                  <CategoryGlyph cat={catOf(current)} />
-                  {q.subtitle && (
-                    <p className="text-[15px] lg:text-base font-light text-[#1A1A1A]/70 leading-relaxed text-center mb-10 max-w-sm">{q.subtitle}</p>
-                  )}
+            {/* Мобилно: заоблена карта вместо кръг — духът на дизайна, повече място */}
+            <div className="lg:hidden">
+              <div className="wz-shake rounded-[24px] border border-[#E5E5E5] bg-white shadow-[0_8px_40px_rgba(0,0,0,0.08)] p-6 min-h-[450px] flex flex-col">
+                <div className="wz-anim flex flex-col items-center gap-5 flex-1">
+                  {zoneA}
+                  {zoneTitle}
                   {answerArea}
+                  {skipLink}
+                  <div className="mt-auto w-full pt-4">
+                    {navButtons('mobile')}
+                  </div>
                 </div>
-
-                {/* ПРЕДИШЕН — вертикално на десния ръб */}
-                {current > 0 && (
-                  <button onClick={prev} className="absolute right-[2%] top-1/2 -translate-y-1/2 flex flex-col items-center gap-3 text-[#1A1A1A]/60 hover:text-[#1A1A1A] transition-colors group">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="group-hover:-translate-y-1 transition-transform">
-                      <path d="M12 19V5M5 12l7-7 7 7" strokeLinecap="round" strokeLinejoin="round" />
-                    </svg>
-                    <span className="text-[10px] font-medium tracking-[0.3em]" style={{ writingMode: 'vertical-rl' }}>ПРЕДИШЕН</span>
-                  </button>
-                )}
-
-                {/* СЛЕДВАЩ — на ръба на кръга, долу вдясно */}
-                {!isLast && (
-                  <button onClick={next} className="absolute bottom-[8%] right-[10%] flex items-center gap-3 group">
-                    <span className="text-[10px] font-medium tracking-[0.3em] text-[#DC2626]" style={{ writingMode: 'vertical-rl' }}>СЛЕДВАЩ</span>
-                    <span className="w-16 h-16 rounded-full bg-[#DC2626] flex items-center justify-center shadow-lg shadow-[#DC2626]/30 group-hover:scale-110 transition-transform duration-300">
-                      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5">
-                        <path d="M12 5v14M19 12l-7 7-7-7" strokeLinecap="round" strokeLinejoin="round" />
-                      </svg>
-                    </span>
-                  </button>
-                )}
               </div>
-            </div>
-
-            {/* Мобилно: отговорът плоско под въпроса */}
-            <div className="lg:hidden col-span-1">
-              <div className="wz-anim">
-                {q.subtitle && <p className="text-sm font-light text-[#1A1A1A]/65 leading-relaxed mb-6">{q.subtitle}</p>}
-                {answerArea}
-                <div className="flex items-center gap-4 mt-8">
-                  {current > 0 && (
-                    <button onClick={prev} className="flex items-center gap-2 text-sm font-light text-[#1A1A1A]/65 py-3 min-h-[44px]">
-                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M19 12H5M11 18l-6-6 6-6" strokeLinecap="round" strokeLinejoin="round" /></svg>
-                      Назад
-                    </button>
-                  )}
-                  {!isLast && (
-                    <button onClick={next} className="flex items-center gap-2 bg-[#DC2626] text-white px-6 py-3 rounded-full text-sm font-medium active:scale-95 transition-transform duration-200">
-                      Следващ
-                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2"><path d="M12 5v14M19 12l-7 7-7-7" strokeLinecap="round" strokeLinejoin="round" /></svg>
-                    </button>
-                  )}
-                </div>
+              <div className="mt-6 text-xs font-light text-[#1A1A1A]/65 text-center">
+                Предпочитате директно? <a href="mailto:info@justpablo.bg" className="text-[#DC2626] hover:underline py-1">info@justpablo.bg</a>
               </div>
             </div>
           </div>

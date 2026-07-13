@@ -91,6 +91,15 @@
     @apply max-w-[1400px] mx-auto;
   }
   
+  .wz-ring-progress {
+    transition: stroke-dashoffset 0.6s ease-in-out;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .wz-ring-progress {
+      transition: none;
+    }
+  }
+
   .vertical-nav-link {
     @apply text-[11px] uppercase tracking-[0.15em] font-light transition-colors duration-300;
   }
