@@ -5,9 +5,9 @@ import { bgn } from '../lib/currency'
 import { scrollToId } from '../lib/scroll'
 
 const included = [
-  'Пълен одит в 12 модула: сайт, SEO, реклами, социални мрежи и данни',
-  'PDF доклад с конкретни проблеми, приоритети и quick wins за 30 дни',
-  'Реалистична прогноза и готова основа за стратегията',
+  'Пълен одит в 12 модула: сайт, SEO, реклами, социални мрежи и аналитика',
+  'PDF доклад с конкретните проблеми, приоритети и бързи печалби за първите 30 дни',
+  'Реалистична прогноза и готова основа за стратегията ви',
 ]
 
 export default function PriceSpotlight() {
@@ -38,9 +38,13 @@ export default function PriceSpotlight() {
             className="ps-item mx-auto w-14 h-auto mb-5 select-none"
           />
           <span className="text-[10px] uppercase tracking-[0.2em] font-light text-[#DC2626] block mb-4">Прозрачно ценообразуване</span>
-          <h2 className="ps-h2 font-thin-display text-3xl lg:text-5xl text-[#1A1A1A] leading-tight mb-8">
+          <h2 className="ps-h2 font-thin-display text-3xl lg:text-5xl text-[#1A1A1A] leading-tight mb-5">
             Premium Digital Analysis
           </h2>
+
+          <p className="ps-item text-base lg:text-lg font-light text-[#1A1A1A]/70 max-w-xl mx-auto leading-relaxed mb-8">
+            Всяко наше партньорство започва с този анализ. Влизаме дълбоко в бизнеса ви, а вие виждате как мислим и работим. Оттам решаваме заедно накъде да продължим, вече на база реални данни за вашия пазар и аудитория.
+          </p>
 
           {/* Промоционална цена */}
           <div className="ps-item mb-3 flex items-center justify-center gap-3 flex-wrap">
@@ -55,9 +59,19 @@ export default function PriceSpotlight() {
           <div className="ps-item mb-2">
             <span className="text-[clamp(56px,8vw,110px)] font-extralight text-[#DC2626] leading-none tracking-tight">485 €</span>
           </div>
-          <div className="ps-item text-base font-light text-[#1A1A1A]/60 mb-2">{bgn(485)}</div>
+          <div className="ps-item text-base font-light text-[#1A1A1A]/60 mb-4">{bgn(485)}</div>
+
+          <div className="ps-item flex justify-center mb-4">
+            <span className="inline-flex items-center gap-2 rounded-full bg-[#DC2626]/10 text-[#DC2626] px-4 py-2 text-sm font-bold">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                <path d="M13 2 3 14h9l-1 8 10-12h-9l1-8Z" />
+              </svg>
+              Не изпускайте офертата · важи само този месец
+            </span>
+          </div>
+
           <div className="ps-item text-xs uppercase tracking-[0.18em] font-medium text-[#1A1A1A]/60 mb-10">
-            еднократно · промоционална цена · задължителен първи етап
+            еднократно · промоционална цена · първата стъпка към партньорство
           </div>
 
           <div className="ps-item flex flex-col gap-3 max-w-xl mx-auto text-left mb-10">

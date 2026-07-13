@@ -50,16 +50,19 @@ export default function LandingHero() {
           <button
             onClick={() => scrollToId('zapitvane')}
             aria-label="Ограничен брой места този месец — заяви запитване"
-            className="hero-badge group inline-flex items-center gap-3 bg-[#1A1A1A] text-white rounded-full pl-1.5 pr-2 py-1.5 mb-8 lg:mb-10 shadow-[0_10px_30px_rgba(0,0,0,0.15)] hover:shadow-[0_14px_36px_rgba(0,0,0,0.22)] hover:-translate-y-0.5 active:translate-y-0 transition-all duration-300 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#DC2626]"
+            className="hero-badge wz-badge-glow group inline-flex items-center gap-3 bg-[#1A1A1A] text-white rounded-full pl-1.5 pr-2 py-1.5 mb-8 lg:mb-10 shadow-[0_8px_24px_rgba(0,0,0,0.16)] hover:-translate-y-0.5 active:translate-y-0 transition-transform duration-300 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#DC2626]"
           >
-            <span className="flex items-center justify-center w-9 h-9 rounded-full bg-[#DC2626] shrink-0">
+            <span className="flex items-center justify-center w-9 h-9 rounded-full bg-[#DC2626] shrink-0 motion-safe:animate-pulse">
               <svg width="16" height="16" viewBox="0 0 24 24" fill="white" aria-hidden="true">
                 <path d="M13 2 3 14h9l-1 8 10-12h-9l1-8Z" />
               </svg>
             </span>
             <span className="flex flex-col items-start leading-tight pr-1">
-              <span className="text-[10px] font-semibold uppercase tracking-[0.14em] text-white/45">Този месец</span>
-              <span className="text-sm lg:text-[15px] font-bold text-white whitespace-nowrap">Ограничен брой места 5</span>
+              <span className="text-[10px] font-semibold uppercase tracking-[0.14em] text-white/55">Този месец</span>
+              <span className="text-sm lg:text-[15px] font-bold text-white whitespace-nowrap inline-flex items-center gap-2">
+                Ограничен брой места
+                <span className="inline-flex items-center justify-center min-w-[24px] h-6 px-1.5 rounded-full bg-[#DC2626] text-white text-sm font-extrabold leading-none">5</span>
+              </span>
             </span>
             <span className="flex items-center justify-center w-8 h-8 rounded-full border border-white/15 text-white/70 shrink-0 group-hover:border-white/40 group-hover:translate-x-0.5 transition-all duration-300">
               <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" aria-hidden="true">

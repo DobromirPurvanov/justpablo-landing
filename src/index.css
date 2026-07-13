@@ -164,6 +164,17 @@
   .marquee-track-left, .marquee-track-right { animation: none; }
 }
 
+/* Скарсити значка — пулсиращ червен „радар" пръстен, за да хваща окото.
+   Постоянната drop-сянка стои и за reduced-motion (анимацията я застъпва). */
+@keyframes badgeGlow {
+  0%   { box-shadow: 0 8px 24px rgba(0,0,0,0.16), 0 0 0 0 rgba(220,38,38,0.45); }
+  70%  { box-shadow: 0 8px 24px rgba(0,0,0,0.16), 0 0 0 11px rgba(220,38,38,0); }
+  100% { box-shadow: 0 8px 24px rgba(0,0,0,0.16), 0 0 0 0 rgba(220,38,38,0); }
+}
+@media (prefers-reduced-motion: no-preference) {
+  .wz-badge-glow { animation: badgeGlow 2.2s ease-out infinite; }
+}
+
 /* === Концентрични пръстени с услуги (almero стил) === */
 @keyframes spin-rev {
   from { transform: rotate(360deg); }
