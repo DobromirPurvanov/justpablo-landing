@@ -61,41 +61,23 @@ function StepGlyph({ step }: { step: number }) {
   )
 }
 
-/* Ring progress: чисти сегменти без точки (по-изчистен външен обръч) */
+/* Ring progress: плавно запълващ се обръч според текущата стъпка */
 function ProgressRing({ current, total }: { current: number; total: number }) {
-  const cx = 54
-  const cy = 54
-  const r = 48
-  const segAngle = 360 / total
-  const gap = 4
-  const polar = (deg: number) => ((deg - 90) * Math.PI) / 180
-  const arc = (i: number) => {
-    const start = i * segAngle + gap / 2
-    const end = (i + 1) * segAngle - gap / 2
-    const x1 = cx + r * Math.cos(polar(start))
-    const y1 = cy + r * Math.sin(polar(start))
-    const x2 = cx + r * Math.cos(polar(end))
-    const y2 = cy + r * Math.sin(polar(end))
-    return `M ${x1} ${y1} A ${r} ${r} 0 0 1 ${x2} ${y2}`
-  }
+  const pct = total > 1 ? (current / (total - 1)) * 100 : 0
   return (
     <svg className="absolute inset-0 w-full h-full pointer-events-none" viewBox="0 0 108 108" aria-hidden="true">
-      <circle cx={cx} cy={cy} r={r} fill="none" stroke="#F0F0F0" strokeWidth="1.6" />
-      {Array.from({ length: total }, (_, i) => {
-        const done = i < current
-        const active = i === current
-        return (
-          <path
-            key={i}
-            d={arc(i)}
-            fill="none"
-            stroke={done || active ? '#DC2626' : '#E5E5E5'}
-            strokeWidth={active ? 2.8 : done ? 2.2 : 1.8}
-            strokeLinecap="round"
-            className="transition-all duration-500 ease-in-out"
-          />
-        )
-      })}
+      {/* фонов track */}
+      <circle cx="54" cy="54" r="48" fill="none" stroke="#E5E5E5" strokeWidth="3" />
+      {/* червен прогрес, който се запълва отгоре по часовниковата стрелка */}
+      <g transform="rotate(-90 54 54)">
+        <circle
+          cx="54" cy="54" r="48"
+          fill="none" stroke="#DC2626" strokeWidth="3" strokeLinecap="round"
+          pathLength="100" strokeDasharray="100"
+          className="wz-ring-progress"
+          style={{ strokeDashoffset: 100 - pct }}
+        />
+      </g>
     </svg>
   )
 }
