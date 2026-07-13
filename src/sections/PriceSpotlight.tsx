@@ -23,7 +23,7 @@ export default function PriceSpotlight() {
   }, [])
 
   return (
-    <section ref={ref} id="cena" className="bg-[#F5F5F5] py-16 lg:py-24">
+    <section ref={ref} id="cena" className="bg-[#F5F5F5] py-20 lg:py-28">
       <div className="section-padding">
         <div className="container-max text-center max-w-3xl mx-auto">
           <img
@@ -63,7 +63,7 @@ export default function PriceSpotlight() {
 
           <button
             onClick={() => scrollToId('zapitvane')}
-            className="ps-item inline-flex items-center gap-2 bg-[#DC2626] text-white px-8 py-4 rounded-full text-sm uppercase tracking-[0.12em] font-medium hover:bg-[#B91C1C] hover:scale-[1.03] active:scale-95 transition-all duration-300"
+            className="ps-item inline-flex items-center justify-center gap-2 w-full sm:w-auto bg-[#DC2626] text-white px-8 py-4 rounded-full text-sm uppercase tracking-[0.12em] font-medium hover:bg-[#B91C1C] hover:scale-[1.03] active:scale-95 transition-all duration-300"
           >
             Заяви анализ
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">

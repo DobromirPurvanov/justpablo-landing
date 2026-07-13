@@ -18,7 +18,7 @@ export default function LandingFooter() {
               <div className="inline-flex items-center gap-3 mb-6">
                 <img src="./images/logo-mark-white.png" alt="Just Pablo Digital" loading="lazy" decoding="async" width={329} height={329} className="w-9 h-9 object-contain" />
                 <span className="flex flex-col leading-none">
-                  <span className="text-lg font-semibold text-white">Just Pablo</span>
+                  <span className="text-lg font-semibold text-white">Just Pablo</span>{' '}
                   <span className="text-[9px] font-bold uppercase tracking-[0.3em] text-[#DC2626] mt-1">Digital</span>
                 </span>
               </div>

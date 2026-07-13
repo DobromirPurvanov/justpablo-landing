@@ -205,7 +205,7 @@ export default function ScrollWizard() {
         <button
           onClick={() => canSubmit && setIsSuccess(true)}
           disabled={!canSubmit}
-          className={`mt-8 inline-flex items-center gap-2 px-8 py-3.5 rounded-full text-sm font-medium transition-all duration-300 ${canSubmit ? 'bg-[#DC2626] text-white hover:bg-[#B91C1C] hover:scale-[1.03] active:scale-95' : 'bg-[#1A1A1A]/10 text-[#1A1A1A]/40 cursor-not-allowed'}`}
+          className={`mt-8 inline-flex items-center justify-center gap-2 w-full sm:w-auto px-8 py-3.5 rounded-full text-sm font-medium transition-all duration-300 ${canSubmit ? 'bg-[#DC2626] text-white hover:bg-[#B91C1C] hover:scale-[1.03] active:scale-95' : 'bg-[#1A1A1A]/10 text-[#1A1A1A]/40 cursor-not-allowed'}`}
         >
           Изпрати запитване
         </button>

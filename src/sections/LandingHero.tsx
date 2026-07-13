@@ -43,9 +43,9 @@ export default function LandingHero() {
 
       <div className="section-padding w-full relative z-10">
         <div className="container-max">
-          <h1 ref={titleRef} className="font-thin-display text-[clamp(44px,7.5vw,110px)] text-[#1A1A1A] leading-[1.02]">
-            <span className="block overflow-hidden pb-[0.14em] -mb-[0.14em]"><span className="hero-line block">Дигитален</span></span>
-            <span className="block overflow-hidden pb-[0.14em] -mb-[0.14em]"><span className="hero-line block">маркетинг и</span></span>
+          <h1 ref={titleRef} className="font-thin-display text-[clamp(36px,7.5vw,110px)] text-[#1A1A1A] leading-[1.02]">
+            <span className="block overflow-hidden pb-[0.14em] -mb-[0.14em]"><span className="hero-line block">Дигитален</span></span>{' '}
+            <span className="block overflow-hidden pb-[0.14em] -mb-[0.14em]"><span className="hero-line block">маркетинг и</span></span>{' '}
             <span className="block overflow-hidden pb-[0.14em] -mb-[0.14em]"><span className="hero-line block text-[#DC2626]">бизнес развитие</span></span>
           </h1>
 
@@ -53,10 +53,10 @@ export default function LandingHero() {
             Агенцията, изградена върху най-голямата инфлуенсър платформа в България. Данни в реално време, native подход и резултати, които се броят.
           </p>
 
-          <div className="flex flex-wrap items-center gap-4 mt-10">
+          <div className="flex flex-col sm:flex-row sm:flex-wrap items-stretch sm:items-center gap-4 mt-10">
             <button
               onClick={() => scrollToId('zapitvane')}
-              className="hero-cta inline-flex items-center gap-2 bg-[#DC2626] text-white px-8 py-4 rounded-full text-sm uppercase tracking-[0.12em] font-medium hover:bg-[#B91C1C] hover:scale-[1.03] active:scale-95 transition-all duration-300"
+              className="hero-cta inline-flex items-center justify-center gap-2 w-full sm:w-auto bg-[#DC2626] text-white px-8 py-4 rounded-full text-sm uppercase tracking-[0.12em] font-medium hover:bg-[#B91C1C] hover:scale-[1.03] active:scale-95 transition-all duration-300"
             >
               Заяви запитване
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
@@ -65,7 +65,7 @@ export default function LandingHero() {
             </button>
             <button
               onClick={() => scrollToId('cena')}
-              className="hero-cta inline-flex items-center gap-2 text-sm uppercase tracking-[0.12em] font-medium text-[#1A1A1A]/70 hover:text-[#DC2626] px-2 py-4 transition-colors duration-300"
+              className="hero-cta inline-flex items-center justify-center sm:justify-start gap-2 text-sm uppercase tracking-[0.12em] font-medium text-[#1A1A1A]/70 hover:text-[#DC2626] px-2 py-4 transition-colors duration-300"
             >
               Виж цената
             </button>

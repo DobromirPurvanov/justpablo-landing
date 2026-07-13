@@ -105,14 +105,22 @@ export function splitWords(root: Element): HTMLElement[] {
         const text = child.textContent ?? ''
         if (!text.trim()) return
         const frag = document.createDocumentFragment()
+        let prevSpan: HTMLElement | null = null
         text.split(/(\s+)/).forEach(part => {
           if (!part) return
-          if (/^\s+$/.test(part)) { frag.appendChild(document.createTextNode(part)); return }
+          if (/^\s+$/.test(part)) {
+            // Интервалът остава в span-а на предната дума — защита срещу
+            // екстрактори, които изпускат whitespace-only text nodes (SEO, a11y)
+            if (prevSpan) prevSpan.textContent += part
+            else frag.appendChild(document.createTextNode(part))
+            return
+          }
           const span = document.createElement('span')
           span.className = 'w-split'
           span.textContent = part
           frag.appendChild(span)
           words.push(span)
+          prevSpan = span
         })
         node.replaceChild(frag, child)
       } else if (child.nodeType === Node.ELEMENT_NODE) {

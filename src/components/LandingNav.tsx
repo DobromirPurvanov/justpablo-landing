@@ -12,7 +12,7 @@ export default function LandingNav() {
       >
         <img src="./images/logo-mark.png" alt="" width={329} height={329} className="w-10 h-10 lg:w-11 lg:h-11 object-contain" />
         <span className="flex flex-col leading-none">
-          <span className="text-lg font-semibold tracking-tight text-[#1A1A1A]">Just Pablo</span>
+          <span className="text-lg font-semibold tracking-tight text-[#1A1A1A]">Just Pablo</span>{' '}
           <span className="text-[9px] font-bold uppercase tracking-[0.3em] text-[#DC2626] mt-1">Digital</span>
         </span>
       </a>
