@@ -27,10 +27,10 @@ type Question = {
 
 const questions: Question[] = [
   { id: 'brandName', short: 'Дейност', title: 'Каква е дейността на вашата марка?', subtitle: 'Нека се запознаем. Попълването на всички стъпки отнема само минута.', type: 'text', placeholder: 'предмет на дейност' },
-  { id: 'focus', short: 'Фокус', title: 'Какъв е фокусът на вашия бизнес?', subtitle: 'Натиснете върху опция, за да я изберете. Можете да маркирате повече от една.', type: 'checkbox', options: ['Услуга/и', 'Продукт/и собствено производство', 'Търговия или дистрибуция', 'Друго'], skippable: true },
-  { id: 'goals', short: 'Цели', title: 'Какви са вашите цели за онлайн развитие?', subtitle: 'Натиснете върху опция, за да я изберете. Можете да маркирате повече от една.', type: 'checkbox', options: ['Разпознаваемост', 'Продажби', 'Абонаменти', 'Подготовка за експанзия', 'Друго'], skippable: true },
+  { id: 'focus', short: 'Фокус', title: 'Какъв е фокусът на вашия бизнес?', subtitle: 'Изберете всичко, което важи за вас.', type: 'checkbox', options: ['Услуга/и', 'Продукт/и собствено производство', 'Търговия или дистрибуция', 'Друго'], skippable: true },
+  { id: 'goals', short: 'Цели', title: 'Какви са вашите цели за онлайн развитие?', subtitle: 'Изберете всичко, което важи за вас.', type: 'checkbox', options: ['Разпознаваемост', 'Продажби', 'Абонаменти', 'Подготовка за експанзия', 'Друго'], skippable: true },
   { id: 'period', short: 'Период', title: 'За какъв период очаквате резултати?', subtitle: 'Натиснете върху един отговор, за да продължите.', type: 'radio', options: ['3 месеца', '6 месеца', '1 година', '2+ години'] },
-  { id: 'needs', short: 'Услуги', title: 'От какви услуги имате нужда?', subtitle: 'Натиснете върху опция, за да я изберете. Можете да маркирате повече от една.', type: 'checkbox', options: ['Нов уебсайт', 'SEO и GEO (видимост в AI)', 'Онлайн реклама', 'Брандинг и дизайн', 'Социални мрежи и видео'], skippable: true },
+  { id: 'needs', short: 'Услуги', title: 'От какви услуги имате нужда?', subtitle: 'Изберете всичко, което важи за вас.', type: 'checkbox', options: ['Нов уебсайт', 'SEO и GEO (видимост в AI)', 'Онлайн реклама', 'Брандинг и дизайн', 'Социални мрежи и видео'], skippable: true },
   { id: 'budget', short: 'Бюджет', title: 'Какъв е предвиденият бюджет?', subtitle: 'Натиснете върху един отговор, за да продължите.', type: 'radio', options: ['До 500 €', '500 – 1500 €', '1500 – 2500 €', '2500 – 5000 €', 'Над 5000 €'] },
   { id: 'contact', short: 'Контакт', title: 'Информация за контакт', subtitle: 'Ще се свържем с вас в рамките на 24 часа.', type: 'contact' },
   { id: 'review', short: 'Преглед', title: 'Прегледайте и изпратете', subtitle: 'Проверете отговорите си. Всяка стъпка може да се редактира.', type: 'review' },
@@ -424,6 +424,23 @@ export default function ScrollWizard() {
           </div>
         )}
       </div>
+
+      {/* Ясна значка за режима на избор — единичен vs множествен */}
+      {(q.type === 'radio' || q.type === 'checkbox') && (
+        <div className="flex justify-center mb-3">
+          {q.type === 'checkbox' ? (
+            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#DC2626]/[0.08] text-[#DC2626] text-[11px] font-bold uppercase tracking-[0.06em]">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3"><path d="M20 6 9 17l-5-5" strokeLinecap="round" strokeLinejoin="round" /></svg>
+              Може повече от едно
+            </span>
+          ) : (
+            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#1A1A1A]/[0.06] text-[#1A1A1A]/60 text-[11px] font-bold uppercase tracking-[0.06em]">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><circle cx="12" cy="12" r="6" /></svg>
+              Изберете едно
+            </span>
+          )}
+        </div>
+      )}
 
       {q.type === 'radio' && q.options && (
         <div role="radiogroup" aria-label={q.title} className="flex flex-col gap-2.5 lg:gap-1.5 w-full">
