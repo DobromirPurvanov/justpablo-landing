@@ -16,7 +16,9 @@ export default function LandingFooter() {
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-10">
             <div className="lg:col-span-5">
               <div className="inline-flex items-center gap-3 mb-6">
-                <img src="./images/logo-mark-white.png" alt="Just Pablo Digital" loading="lazy" decoding="async" width={329} height={329} className="w-9 h-9 object-contain" />
+                <span className="flex items-center justify-center w-11 h-11 rounded-xl bg-white p-1.5 shrink-0">
+                  <img src="./images/logo-mark.png" alt="Just Pablo Digital" loading="lazy" decoding="async" width={329} height={329} className="w-full h-full object-contain" />
+                </span>
                 <span className="flex flex-col leading-none">
                   <span className="text-lg font-semibold text-white">Just Pablo</span>{' '}
                   <span className="text-[9px] font-bold uppercase tracking-[0.3em] text-[#DC2626] mt-1">Digital</span>
