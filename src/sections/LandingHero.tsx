@@ -50,9 +50,9 @@ export default function LandingHero() {
           <button
             onClick={() => scrollToId('zapitvane')}
             aria-label="Ограничен брой места този месец — заяви запитване"
-            className="hero-badge wz-badge-glow group inline-flex items-center gap-3 bg-[#1A1A1A] text-white rounded-full pl-1.5 pr-2 py-1.5 mb-8 lg:mb-10 shadow-[0_8px_24px_rgba(0,0,0,0.16)] hover:-translate-y-0.5 active:translate-y-0 transition-transform duration-300 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#DC2626]"
+            className="hero-badge group inline-flex items-center gap-3 bg-[#1A1A1A] text-white rounded-full pl-1.5 pr-2 py-1.5 mb-8 lg:mb-10 shadow-[0_6px_20px_rgba(0,0,0,0.12)] hover:-translate-y-0.5 active:translate-y-0 transition-transform duration-300 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#DC2626]"
           >
-            <span className="flex items-center justify-center w-9 h-9 rounded-full bg-[#DC2626] shrink-0 motion-safe:animate-pulse">
+            <span className="flex items-center justify-center w-9 h-9 rounded-full bg-[#DC2626] shrink-0">
               <svg width="16" height="16" viewBox="0 0 24 24" fill="white" aria-hidden="true">
                 <path d="M13 2 3 14h9l-1 8 10-12h-9l1-8Z" />
               </svg>
