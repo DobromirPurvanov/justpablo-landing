@@ -140,6 +140,7 @@ export default function ScrollWizard() {
   const [isSuccess, setIsSuccess] = useState(false)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [stepError, setStepError] = useState('')
+  const [submitFailed, setSubmitFailed] = useState(false)
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({})
   const [resume, setResume] = useState<{ formData: Record<string, any>; current: number; phase: 'intro' | 'wizard' } | null>(null)
   const rootRef = useRef<HTMLDivElement>(null)
@@ -295,6 +296,7 @@ export default function ScrollWizard() {
     }
     setIsSubmitting(true)
     setStepError('')
+    setSubmitFailed(false)
     try {
       const recaptchaToken = await getRecaptchaToken('submit')
       const res = await fetch('/api/send-email', {
@@ -310,10 +312,30 @@ export default function ScrollWizard() {
       setIsSuccess(true)
     } catch (err: any) {
       setStepError(err.message || 'Неуспешно изпращане. Моля, опитайте отново.')
+      setSubmitFailed(true)
       shake()
     } finally {
       setIsSubmitting(false)
     }
+  }
+
+  /* Резервен канал: ако изпращането се провали, клиентът да ни пише директно
+     с вече попълнените данни (една заявка не бива да се губи). */
+  const mailtoFallback = () => {
+    const lines = [
+      `Име: ${formData.name || ''}`,
+      `Имейл: ${formData.email || ''}`,
+      `Телефон: ${formData.phone || ''}`,
+      `Сайт/бизнес: ${formData.site || ''}`,
+      `Тип бранд: ${formData.brandType || ''}`,
+      `Дейност: ${formData.brandName || ''}`,
+      `Фокус: ${((formData.focus as string[]) || []).join(', ')}`,
+      `Цели: ${((formData.goals as string[]) || []).join(', ')}`,
+      `Период: ${formData.period || ''}`,
+      `Услуги: ${((formData.needs as string[]) || []).join(', ')}`,
+      `Бюджет: ${formData.budget || ''}`,
+    ]
+    return `mailto:adsjustpablo@gmail.com?subject=${encodeURIComponent(`Запитване от ${formData.name || 'сайта'}`)}&body=${encodeURIComponent(lines.join('\n'))}`
   }
 
   useEffect(() => {
@@ -388,6 +410,19 @@ export default function ScrollWizard() {
       {/* Грешка на стъпката — над опциите, aria-live за скрийнрийдъри */}
       <div aria-live="polite" className={stepError ? 'mb-3' : ''}>
         {stepError && <p className="text-sm font-semibold text-[#EF4444] text-center">{stepError}</p>}
+        {submitFailed && (
+          <div className="mt-2 text-center">
+            <p className="text-xs font-light text-[#1A1A1A]/70 mb-2">Изпращането не мина. За да не се губи запитването, пишете ни директно:</p>
+            <a
+              href={mailtoFallback()}
+              className="inline-flex items-center gap-2 px-5 h-11 rounded-full bg-[#1A1A1A] text-white text-sm font-semibold hover:bg-black transition-colors"
+            >
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="5" width="18" height="14" rx="2" /><path d="m3 7 9 6 9-6" strokeLinecap="round" strokeLinejoin="round" /></svg>
+              Пишете ни на имейл
+            </a>
+            <p className="text-xs font-light text-[#1A1A1A]/50 mt-2">или на adsjustpablo@gmail.com</p>
+          </div>
+        )}
       </div>
 
       {q.type === 'radio' && q.options && (

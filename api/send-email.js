@@ -7,17 +7,16 @@ function parseBody(req) {
   return req.body || {}
 }
 
-/* Google reCAPTCHA v3 проверка. Ако RECAPTCHA_SECRET_KEY не е зададен,
-   пропускаме (формата продължава да работи), но логваме предупреждение. */
-async function verifyRecaptcha(token) {
+/* Google reCAPTCHA v3 — оценяваме, но НЕ блокираме. Целта е да не губим
+   реални клиенти: винаги приемаме заявката, а само маркираме съмнителните
+   (провалена проверка / нисък score) с бележка в имейла.
+   Липсващ token (напр. блокер), липсващ secret или мрежов проблем НЕ се
+   третират като спам — за да не наказваме легитимни хора. */
+async function assessRecaptcha(token) {
   const secret = process.env.RECAPTCHA_SECRET_KEY
   const minScore = Number(process.env.RECAPTCHA_MIN_SCORE || '0.5')
 
-  if (!secret) {
-    console.warn('RECAPTCHA_SECRET_KEY не е зададен — пропускам reCAPTCHA проверката')
-    return { ok: true, skipped: true }
-  }
-  if (!token) return { ok: false, reason: 'missing-token' }
+  if (!secret || !token) return { suspicious: false, note: null }
 
   try {
     const params = new URLSearchParams({ secret, response: String(token) })
@@ -27,15 +26,17 @@ async function verifyRecaptcha(token) {
       body: params,
     })
     const data = await resp.json()
-    if (!data.success) return { ok: false, reason: 'verify-failed', errors: data['error-codes'] }
-    if (typeof data.score === 'number' && data.score < minScore) {
-      return { ok: false, reason: 'low-score', score: data.score }
+    if (!data.success) {
+      const codes = (data['error-codes'] || []).join(', ') || 'unknown'
+      return { suspicious: true, note: `reCAPTCHA не премина (${codes})` }
     }
-    return { ok: true, score: data.score }
+    if (typeof data.score === 'number' && data.score < minScore) {
+      return { suspicious: true, note: `нисък reCAPTCHA score (${data.score})` }
+    }
+    return { suspicious: false, note: null, score: data.score }
   } catch (err) {
-    // Мрежов проблем към Google — не блокираме легитимен потребител.
     console.error('reCAPTCHA verify error:', err)
-    return { ok: true, error: true }
+    return { suspicious: false, note: null }
   }
 }
 
@@ -59,13 +60,11 @@ export default async function handler(req, res) {
       return res.status(400).json({ success: false, error: 'Име и имейл са задължителни.' })
     }
 
-    const gate = await verifyRecaptcha(body.recaptchaToken)
-    if (!gate.ok) {
-      console.warn('reCAPTCHA отхвърли заявка:', gate)
-      return res.status(400).json({ success: false, error: 'Проверката за сигурност не бе успешна. Моля, опитайте отново.' })
-    }
+    // reCAPTCHA само маркира съмнителните — никога не блокира (за да не губим клиенти).
+    const rc = await assessRecaptcha(body.recaptchaToken)
+    if (rc.suspicious) console.warn('reCAPTCHA маркира заявка като съмнителна:', rc.note)
 
-    const { html: htmlContent, text: textContent, subject } = buildInquiryEmail(body)
+    const { html: htmlContent, text: textContent, subject } = buildInquiryEmail(body, { spamNote: rc.note })
 
     const recipients = [
       process.env.TO_EMAIL_PRIMARY,

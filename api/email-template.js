@@ -33,13 +33,26 @@ function sentAtLabel() {
 
 /**
  * Изгражда съдържанието на имейла от данните на формата.
+ * @param {object} data - данните от формата
+ * @param {object} [opts] - { spamNote?: string } — предупреждение, ако reCAPTCHA е съмнителна
  * @returns {{ html: string, text: string, subject: string }}
  */
-export function buildInquiryEmail(data = {}) {
+export function buildInquiryEmail(data = {}, opts = {}) {
   const { brandType, brandName, focus, goals, period, needs, budget, name, email, phone, site } = data
+  const spamNote = opts.spamNote ? String(opts.spamNote) : ''
 
   const displayName = String(name || '').trim() || 'Клиент'
   const sentAt = sentAtLabel()
+
+  // Предупредителна лента (само ако reCAPTCHA е маркирала заявката като съмнителна)
+  const spamWarningHtml = spamNote
+    ? `
+          <tr>
+            <td style="padding:12px 20px;background-color:#FFF4E5;border-bottom:1px solid #FCE2BD;">
+              <span style="font-size:13px;color:#B45309;font-weight:600;">&#9888;&nbsp; Възможен спам: ${escapeHtml(spamNote)}. Прегледайте внимателно.</span>
+            </td>
+          </tr>`
+    : ''
 
   // Сурови стойности (за текстовата версия) + подредба на редовете
   const rawDetails = [
@@ -102,7 +115,7 @@ export function buildInquiryEmail(data = {}) {
               </table>
             </td>
           </tr>
-
+${spamWarningHtml}
           <!-- Contact hero -->
           <tr>
             <td style="padding:30px 32px 4px;">
@@ -182,6 +195,7 @@ export function buildInquiryEmail(data = {}) {
 
   const textContent = [
     'НОВО ЗАПИТВАНЕ ОТ JUST PABLO',
+    ...(spamNote ? [`⚠ ВЪЗМОЖЕН СПАМ: ${spamNote}. Прегледайте внимателно.`] : []),
     '',
     `Име: ${displayName}`,
     `Имейл: ${email || 'Не е посочен'}`,
