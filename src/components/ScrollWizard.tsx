@@ -628,7 +628,7 @@ export default function ScrollWizard() {
         <div className="wz-success-face w-32 lg:w-40 mb-10" aria-hidden="true">
           <LogoFace />
         </div>
-        <h1 className="wz-h1 font-thin-display text-[clamp(40px,7vw,84px)] text-[#1A1A1A] leading-none mb-6">Благодарим!</h1>
+        <h2 className="wz-h1 font-thin-display text-[clamp(40px,7vw,84px)] text-[#1A1A1A] leading-none mb-6">Благодарим!</h2>
         <p className="text-base font-light text-[#1A1A1A]/60 max-w-md mb-10">
           Запитването е изпратено. Ще се запознаем с детайлите и ще се свържем с вас в рамките на 24 часа.
         </p>
@@ -668,9 +668,9 @@ export default function ScrollWizard() {
           <div className="container-max">
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
               <div className="lg:col-span-5">
-                <h1 className="wz-h1 text-[clamp(32px,4.5vw,56px)] font-bold text-[#1A1A1A] leading-tight mb-8">
+                <h2 className="wz-h1 text-[clamp(32px,4.5vw,56px)] font-bold text-[#1A1A1A] leading-tight mb-8">
                   Какъв е вашият бизнес?
-                </h1>
+                </h2>
                 <div className="flex flex-col gap-5 text-base lg:text-lg font-light italic text-[#1A1A1A]/70 leading-relaxed max-w-md">
                   <p>Запитването не ви обвързва с нищо, но ни дава време да се запознаем в детайли с вашия бизнес.</p>
                   <p>Така, когато се чуем за среща, ще сме подготвени и още от първия разговор ще сме ви полезни с конкретни предложения, параметри и анализи.</p>
