@@ -610,13 +610,13 @@ export default function ScrollWizard() {
     </div>
   )
 
-  // На десктоп: щом има избрана опция (checkbox), броячът „Избрани: X от Y" заема
-  // мястото на подзаглавието — така маркирането не добавя височина и кръгът не „прелива".
-  const hideSubtitleDesktop = isReview || (q.type === 'checkbox' && ((formData[q.id] as string[]) || []).length > 0)
+  // ВАЖНО: подзаглавието НЕ се крие при селекция — по-рано изчезваше, за да
+  // „спести място", но това местеше опциите под курсора и водеше до грешни
+  // кликове при бърз multi-select (реално възпроизведен mis-click).
   const zoneTitle = (
     <div className="text-center px-2">
       <h2 className="text-lg lg:text-[clamp(18px,1.6vw,24px)] font-bold text-[#1A1A1A] leading-tight max-w-[95%] mx-auto">{q.title}</h2>
-      {q.subtitle && <p className={`text-xs lg:text-sm font-light text-[#1A1A1A]/60 mt-1.5 lg:mt-2 leading-relaxed max-w-sm mx-auto ${hideSubtitleDesktop ? 'lg:hidden' : ''}`}>{q.subtitle}</p>}
+      {q.subtitle && !isReview && <p className="text-xs lg:text-sm font-light text-[#1A1A1A]/60 mt-1.5 lg:mt-2 leading-relaxed max-w-sm mx-auto">{q.subtitle}</p>}
     </div>
   )
 
