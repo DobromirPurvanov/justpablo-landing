@@ -70,7 +70,7 @@ export default function PriceSpotlight() {
             </span>
           </div>
 
-          <div className="ps-item text-xs uppercase tracking-[0.18em] font-medium text-[#1A1A1A]/60 mb-10">
+          <div className="ps-item text-xs uppercase tracking-[0.18em] font-medium text-[#1A1A1A]/70 mb-10">
             еднократно · промоционална цена · първата стъпка към партньорство
           </div>
 

@@ -54,7 +54,7 @@ export default function CookieConsent() {
         <button
           type="button"
           onClick={() => decide('necessary')}
-          className="flex-1 h-11 rounded-full border-2 border-[#E5E5E5] text-sm font-medium text-[#1A1A1A]/70 hover:border-[#1A1A1A]/30 hover:text-[#1A1A1A] active:scale-[0.98] transition-all duration-200 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#DC2626]"
+          className="flex-1 h-11 px-3 rounded-full border-2 border-[#E5E5E5] text-[13px] font-medium text-[#1A1A1A]/70 hover:border-[#1A1A1A]/30 hover:text-[#1A1A1A] active:scale-[0.98] transition-all duration-200 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#DC2626]"
         >
           Само необходимите
         </button>

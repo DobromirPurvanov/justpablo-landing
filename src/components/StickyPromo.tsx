@@ -86,7 +86,7 @@ export default function StickyPromo() {
         type="button"
         onClick={close}
         aria-label="Затвори промоцията"
-        className="flex items-center justify-center w-7 h-7 rounded-full text-white/40 hover:text-white hover:bg-white/10 transition-colors shrink-0"
+        className="flex items-center justify-center w-10 h-10 -my-1.5 rounded-full text-white/40 hover:text-white hover:bg-white/10 transition-colors shrink-0"
       >
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" aria-hidden="true">
           <path d="M6 6l12 12M18 6L6 18" strokeLinecap="round" />

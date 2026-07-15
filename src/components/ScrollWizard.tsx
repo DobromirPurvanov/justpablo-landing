@@ -292,6 +292,18 @@ export default function ScrollWizard() {
     if (!formData.privacy) {
       setStepError('Моля, потвърдете, че сте съгласни с политиката за поверителност.')
       shake()
+      // Чекбоксът е в дъното на скрол-зоната — грешката добавя редове отгоре
+      // и без този скрол той излиза извън видимото (потребителят не вижда
+      // какво да потвърди). Скролваме вътрешната зона, не документа (Lenis).
+      // Два паса: грешката се рендерира асинхронно и променя scrollHeight,
+      // а scroll-smooth анимацията прекъсва единичното присвояване.
+      for (const delay of [120, 500]) {
+        window.setTimeout(() => {
+          for (const zone of [contentRef.current, mobileScrollRef.current]) {
+            if (zone) zone.scrollTo({ top: zone.scrollHeight, behavior: 'smooth' })
+          }
+        }, delay)
+      }
       return
     }
     setIsSubmitting(true)
@@ -304,14 +316,19 @@ export default function ScrollWizard() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ ...formData, recaptchaToken }),
       })
-      const data = await res.json()
-      if (!res.ok || !data.success) {
-        throw new Error(data.error || 'Грешка при изпращане на запитването.')
+      // Отговорът може да не е JSON (таймаут, CDN/прокси грешка) — не оставяме
+      // суровото изключение да стигне до потребителя.
+      const data = await res.json().catch(() => null)
+      if (!res.ok || !data?.success) {
+        throw new Error(data?.error || 'Грешка при изпращане на запитването.')
       }
       clearSaved()
       setIsSuccess(true)
     } catch (err: any) {
-      setStepError(err.message || 'Неуспешно изпращане. Моля, опитайте отново.')
+      // Технически съобщения (Failed to fetch, JSON parse…) не са за потребителя —
+      // показваме ги само ако са наши (на кирилица), иначе разбираем текст.
+      const human = typeof err?.message === 'string' && /[а-яА-Я]/.test(err.message)
+      setStepError(human ? err.message : 'Неуспешно изпращане. Моля, опитайте отново.')
       setSubmitFailed(true)
       shake()
     } finally {
@@ -459,11 +476,14 @@ export default function ScrollWizard() {
                 onClick={() => toggleCheckbox(q.id, opt)} />
             ))}
           </div>
-          {((formData[q.id] as string[]) || []).length > 0 && (
-            <div className="text-xs font-semibold text-[#DC2626] text-center mt-1.5 lg:mt-1" aria-live="polite">
-              Избрани: {((formData[q.id] as string[]) || []).length} от {q.options.length}
-            </div>
-          )}
+          {/* Редът е винаги рендиран (opacity toggle), за да не добавя височина
+              при първата селекция — иначе опциите се местят под курсора. */}
+          <div
+            className={`text-xs font-semibold text-[#DC2626] text-center mt-1.5 lg:mt-1 transition-opacity duration-200 ${((formData[q.id] as string[]) || []).length > 0 ? 'opacity-100' : 'opacity-0'}`}
+            aria-live="polite"
+          >
+            Избрани: {((formData[q.id] as string[]) || []).length} от {q.options.length}
+          </div>
         </div>
       )}
 
