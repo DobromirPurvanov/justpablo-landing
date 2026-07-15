@@ -31,11 +31,11 @@ export default function StatsBand({ stats = defaultStats }: { stats?: Stat[] }) 
         <div className="container-max">
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-x-6 gap-y-10">
             {stats.map(s => (
-              <div key={s.label} className="sb-item">
+              <div key={s.label} className="sb-item lg:border-l lg:border-[#1A1A1A]/[0.08] lg:pl-8 lg:first:border-l-0 lg:first:pl-0">
                 <div className="sb-num text-[clamp(30px,3.6vw,56px)] font-extralight text-[#DC2626] leading-none tracking-tight whitespace-nowrap">
                   {s.value}
                 </div>
-                <div className="text-xs lg:text-sm font-light text-[#1A1A1A]/60 mt-2 leading-snug">{s.label}</div>
+                <div className="text-xs lg:text-sm font-light text-[#1A1A1A]/60 mt-2.5 leading-snug">{s.label}</div>
               </div>
             ))}
           </div>

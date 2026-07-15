@@ -49,7 +49,7 @@ export default function Marquee() {
     <section ref={ref} className="marquee-group bg-white py-16 lg:py-24 overflow-hidden">
       <div className="section-padding mb-10">
         <div className="container-max">
-          <h2 className="text-[10px] uppercase tracking-[0.2em] font-light text-[#DC2626]">Пълна гама дигитални услуги</h2>
+          <h2 className="eyebrow">Пълна гама дигитални услуги</h2>
         </div>
       </div>
       <div className="flex flex-col gap-6 lg:gap-8">

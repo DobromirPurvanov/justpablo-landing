@@ -37,7 +37,7 @@ export default function PriceSpotlight() {
             draggable={false}
             className="ps-item mx-auto w-14 h-auto mb-5 select-none"
           />
-          <span className="text-[10px] uppercase tracking-[0.2em] font-light text-[#DC2626] block mb-4">Прозрачно ценообразуване</span>
+          <span className="eyebrow-center mb-5">Прозрачно ценообразуване</span>
           <h2 className="ps-h2 font-thin-display text-3xl lg:text-5xl text-[#1A1A1A] leading-tight mb-5">
             Premium Digital Analysis
           </h2>

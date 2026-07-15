@@ -86,6 +86,35 @@
   .section-padding {
     @apply px-6 md:px-12 lg:px-16 xl:px-24;
   }
+
+  /* Секционен „eyebrow" етикет — тънка водеща линийка + разреден шрифт.
+     Дребен, но осезаем дизайнерски детайл, който обединява секциите. */
+  .eyebrow {
+    @apply inline-flex items-center gap-3 text-[11px] uppercase tracking-[0.22em] font-medium text-[#DC2626];
+  }
+  .eyebrow::before {
+    content: "";
+    display: block;
+    width: 26px;
+    height: 1px;
+    flex: none;
+    background: currentColor;
+    opacity: 0.55;
+  }
+  /* Центриран вариант — линийки от двете страни (за центрирани секции). */
+  .eyebrow-center {
+    @apply flex items-center justify-center gap-3 text-[11px] uppercase tracking-[0.22em] font-medium text-[#DC2626];
+  }
+  .eyebrow-center::before,
+  .eyebrow-center::after {
+    content: "";
+    display: block;
+    width: 26px;
+    height: 1px;
+    flex: none;
+    background: currentColor;
+    opacity: 0.55;
+  }
   
   .container-max {
     @apply max-w-[1400px] mx-auto;

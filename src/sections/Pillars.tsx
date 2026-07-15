@@ -41,7 +41,7 @@ export default function Pillars() {
     <section ref={ref} className="bg-white py-20 lg:py-28 border-t border-[#1A1A1A]/[0.06]">
       <div className="section-padding">
         <div className="container-max">
-          <span className="pl-label text-[10px] uppercase tracking-[0.2em] font-light text-[#DC2626] block mb-4">Защо Just Pablo</span>
+          <span className="pl-label eyebrow mb-5">Защо Just Pablo</span>
           <h2 className="pl-h2 font-thin-display text-3xl lg:text-5xl text-[#1A1A1A] leading-tight mb-6 max-w-2xl">
             Какво ни прави различни
           </h2>
@@ -50,11 +50,11 @@ export default function Pillars() {
           </p>
           <div className="flex flex-col">
             {pillars.map(p => (
-              <div key={p.number} className="pl-row grid grid-cols-[auto_1fr] gap-6 lg:gap-10 py-7 lg:py-9 border-t border-[#1A1A1A]/[0.08]">
-                <span className="text-3xl lg:text-4xl font-extralight text-[#DC2626]/30 leading-none">{p.number}</span>
-                <div>
-                  <h3 className="text-lg lg:text-xl font-semibold text-[#1A1A1A] mb-2">{p.title}</h3>
-                  <p className="text-base font-light text-[#1A1A1A]/70 leading-relaxed max-w-3xl">{p.text}</p>
+              <div key={p.number} className="pl-row group grid grid-cols-[auto_1fr] gap-6 lg:gap-12 py-8 lg:py-11 border-t border-[#1A1A1A]/[0.08]">
+                <span className="font-thin-display text-5xl lg:text-7xl text-[#DC2626]/20 leading-[0.8] tabular-nums transition-colors duration-500 group-hover:text-[#DC2626]/45">{p.number}</span>
+                <div className="lg:pt-1.5">
+                  <h3 className="text-xl lg:text-2xl font-semibold text-[#1A1A1A] tracking-tight mb-2.5">{p.title}</h3>
+                  <p className="text-base lg:text-[17px] font-light text-[#1A1A1A]/65 leading-relaxed max-w-3xl">{p.text}</p>
                 </div>
               </div>
             ))}

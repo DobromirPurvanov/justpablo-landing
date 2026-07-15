@@ -182,9 +182,13 @@ export function maskReveal(target: Element | null, trigger: Element | null, opts
     inner.className = 'mask-inner'
     while (target.firstChild) inner.appendChild(target.firstChild)
     target.appendChild(inner)
+    // Клипваме descender-ите (overflow hidden + padding), но компенсацията
+    // отива на inner-а, а НЕ на marginBottom на самото заглавие — иначе
+    // inline стилът презаписваше utility класа (mb-6) и изяждаше отстъпа
+    // до следващия елемент.
     ;(target as HTMLElement).style.overflow = 'hidden'
     ;(target as HTMLElement).style.paddingBottom = '0.14em'
-    ;(target as HTMLElement).style.marginBottom = '-0.14em'
+    inner.style.marginBottom = '-0.14em'
   }
   gsap.fromTo(inner,
     { yPercent: 115 },
