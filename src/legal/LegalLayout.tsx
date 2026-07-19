@@ -1,8 +1,10 @@
 import type { ReactNode } from 'react'
+import CookieConsent from '../components/CookieConsent'
 
 export default function LegalLayout({ title, children }: { title: string; children: ReactNode }) {
   return (
     <div className="min-h-screen bg-white text-[#1A1A1A]">
+      <CookieConsent />
       <header className="section-padding py-6 border-b border-[#1A1A1A]/[0.06]">
         <div className="container-max flex items-center justify-between">
           <a href="./" className="flex flex-col leading-none">

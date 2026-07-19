@@ -41,7 +41,8 @@ const contactFields = [
   { id: 'name', type: 'text', label: 'име и фамилия *', auto: 'name', hint: 'next' as const, required: true },
   { id: 'email', type: 'email', label: 'e-mail адрес *', auto: 'email', hint: 'next' as const, required: true },
   { id: 'phone', type: 'tel', label: 'телефон (по избор)', auto: 'tel', hint: 'next' as const, required: false },
-  { id: 'site', type: 'text', label: 'име на бизнес / сайт (по избор)', auto: 'organization', hint: 'done' as const, required: false },
+  { id: 'site', type: 'text', label: 'име на бизнес / сайт (по избор)', auto: 'organization', hint: 'next' as const, required: false },
+  { id: 'socials', type: 'text', label: 'социални мрежи — линк или @акаунт (по избор)', auto: 'off', hint: 'done' as const, required: false },
 ]
 
 const prefersReduced = () => window.matchMedia('(prefers-reduced-motion: reduce)').matches
@@ -352,6 +353,7 @@ export default function ScrollWizard() {
       `Имейл: ${formData.email || ''}`,
       `Телефон: ${formData.phone || ''}`,
       `Сайт/бизнес: ${formData.site || ''}`,
+      `Социални мрежи: ${formData.socials || ''}`,
       `Тип бранд: ${formData.brandType || ''}`,
       `Дейност: ${formData.brandName || ''}`,
       `Фокус: ${((formData.focus as string[]) || []).join(', ')}`,
@@ -545,7 +547,7 @@ export default function ScrollWizard() {
               ...questions.slice(0, 7).map((rq, i) => ({
                 short: rq.short,
                 val: rq.type === 'contact'
-                  ? [formData.name, formData.email, formData.phone, formData.site].filter(Boolean).join(' · ')
+                  ? [formData.name, formData.email, formData.phone, formData.site, formData.socials].filter(Boolean).join(' · ')
                   : Array.isArray(formData[rq.id]) ? (formData[rq.id] as string[]).join(', ') : formData[rq.id],
                 edit: () => go(i),
               }))].map(row => (

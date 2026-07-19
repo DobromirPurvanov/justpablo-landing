@@ -27,7 +27,7 @@ function clamp(value) {
 }
 
 function sanitizeBody(body) {
-  const fields = ['brandType', 'brandName', 'focus', 'goals', 'period', 'needs', 'budget', 'name', 'email', 'phone', 'site']
+  const fields = ['brandType', 'brandName', 'focus', 'goals', 'period', 'needs', 'budget', 'name', 'email', 'phone', 'site', 'socials']
   const out = {}
   for (const key of fields) {
     if (body[key] !== undefined) out[key] = clamp(body[key])

@@ -3,8 +3,13 @@
    • buildInquiryEmail        — известие към екипа
    • buildClientConfirmation  — потвърждение към клиента
    Table-based + inline стилове за максимална съвместимост
-   (Gmail, Apple Mail, Outlook). Без външни ресурси.
+   (Gmail, Apple Mail, Outlook). Единственият външен ресурс е
+   хостнатото лого — имейл клиентите блокират base64 изображения.
    ──────────────────────────────────────────────────────────── */
+
+/* Белият вариант на марка — чете се върху тъмния хедър. Абсолютен URL,
+   защото Gmail не показва inline/data-URI изображения. */
+const LOGO_URL = 'https://www.just-pablo.com/images/logo-mark-white.png'
 
 export function escapeHtml(text) {
   if (text == null) return ''
@@ -67,7 +72,7 @@ function renderDetailRows(rows) {
  * @returns {{ html: string, text: string, subject: string }}
  */
 export function buildInquiryEmail(data = {}, opts = {}) {
-  const { brandType, brandName, focus, goals, period, needs, budget, name, email, phone, site } = data
+  const { brandType, brandName, focus, goals, period, needs, budget, name, email, phone, site, socials } = data
   const spamNote = opts.spamNote ? String(opts.spamNote) : ''
 
   const displayName = String(name || '').trim() || 'Клиент'
@@ -91,6 +96,7 @@ export function buildInquiryEmail(data = {}, opts = {}) {
   const safeEmail = escapeHtml(email)
   const safePhone = escapeHtml(phone)
   const safeSite = escapeHtml(site)
+  const safeSocials = escapeHtml(socials)
 
   const preheader = escapeHtml(`Ново запитване от ${displayName} · ${formatList(needs)} · ${budget || ''}`)
 
@@ -112,20 +118,18 @@ export function buildInquiryEmail(data = {}, opts = {}) {
 
           <!-- Header -->
           <tr>
-            <td style="background-color:#1a1a1a;padding:26px 32px;">
-              <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
-                <tr>
-                  <td style="font-size:20px;font-weight:800;color:#ffffff;letter-spacing:-0.02em;">
-                    Just Pablo <span style="color:#DC2626;">&bull;</span>
-                    <span style="font-size:11px;font-weight:600;letter-spacing:0.18em;color:#9ca3af;">DIGITAL</span>
-                  </td>
-                  <td align="right">
-                    <span style="display:inline-block;background-color:#DC2626;color:#ffffff;font-size:11px;font-weight:700;letter-spacing:0.08em;padding:6px 13px;border-radius:999px;">НОВО ЗАПИТВАНЕ</span>
-                  </td>
-                </tr>
-              </table>
+            <td align="center" style="background-color:#1a1a1a;padding:36px 32px 28px;">
+              <img src="${LOGO_URL}" width="64" height="64" alt="Just Pablo" style="display:block;margin:0 auto 16px;border:0;outline:none;text-decoration:none;" />
+              <div style="font-size:22px;font-weight:800;color:#ffffff;letter-spacing:-0.02em;line-height:1.2;">
+                Just Pablo <span style="color:#DC2626;">&bull;</span>
+                <span style="font-size:11px;font-weight:600;letter-spacing:0.22em;color:#9ca3af;">DIGITAL</span>
+              </div>
+              <div style="padding-top:18px;">
+                <span style="display:inline-block;background-color:#DC2626;color:#ffffff;font-size:11px;font-weight:700;letter-spacing:0.12em;padding:7px 16px;border-radius:999px;">НОВО ЗАПИТВАНЕ</span>
+              </div>
             </td>
           </tr>
+          <tr><td style="height:3px;line-height:3px;font-size:0;background-color:#DC2626;">&nbsp;</td></tr>
 ${spamWarningHtml}
           <!-- Contact hero -->
           <tr>
@@ -155,6 +159,12 @@ ${spamWarningHtml}
                   <td style="padding:0 0 4px;">
                     <div style="font-size:12px;color:#9ca3af;margin-bottom:2px;">Сайт / бизнес</div>
                     <span style="font-size:15px;color:#111827;font-weight:600;">${safeSite || 'Не е посочен'}</span>
+                  </td>
+                </tr>
+                <tr>
+                  <td style="padding:12px 0 4px;">
+                    <div style="font-size:12px;color:#9ca3af;margin-bottom:2px;">Социални мрежи</div>
+                    <span style="font-size:15px;color:#111827;font-weight:600;">${safeSocials || 'Не са посочени'}</span>
                   </td>
                 </tr>
               </table>
@@ -189,7 +199,7 @@ ${spamWarningHtml}
 
           <!-- Footer -->
           <tr>
-            <td style="padding:22px 32px 30px;">
+            <td align="center" style="padding:22px 32px 30px;border-top:1px solid #eef0f2;">
               <div style="font-size:12px;color:#9ca3af;line-height:1.6;">
                 Изпратено автоматично от контактната форма на <span style="color:#6b7280;font-weight:700;">Just&nbsp;Pablo</span><br>
                 ${escapeHtml(sentAt)}
@@ -212,6 +222,7 @@ ${spamWarningHtml}
     `Имейл: ${email || 'Не е посочен'}`,
     `Телефон: ${phone || 'Не е посочен'}`,
     `Сайт/бизнес: ${site || 'Не е посочен'}`,
+    `Социални мрежи: ${socials || 'Не са посочени'}`,
     '',
     '— Детайли за проекта —',
     ...rawDetails.map(([label, value]) => `${label}: ${value}`),
@@ -242,7 +253,7 @@ ${spamWarningHtml}
  * @returns {{ html: string, text: string, subject: string }}
  */
 export function buildClientConfirmation(data = {}, opts = {}) {
-  const { name, phone, site, brandType, brandName, focus, goals, period, needs, budget } = data
+  const { name, phone, site, socials, brandType, brandName, focus, goals, period, needs, budget } = data
 
   const displayName = String(name || '').trim()
   const firstName = displayName ? displayName.split(/\s+/)[0] : ''
@@ -280,13 +291,15 @@ export function buildClientConfirmation(data = {}, opts = {}) {
 
           <!-- Header -->
           <tr>
-            <td style="background-color:#1a1a1a;padding:26px 32px;">
-              <span style="font-size:20px;font-weight:800;color:#ffffff;letter-spacing:-0.02em;">
+            <td align="center" style="background-color:#1a1a1a;padding:36px 32px 30px;">
+              <img src="${LOGO_URL}" width="64" height="64" alt="Just Pablo" style="display:block;margin:0 auto 16px;border:0;outline:none;text-decoration:none;" />
+              <div style="font-size:22px;font-weight:800;color:#ffffff;letter-spacing:-0.02em;line-height:1.2;">
                 Just Pablo <span style="color:#DC2626;">&bull;</span>
-                <span style="font-size:11px;font-weight:600;letter-spacing:0.18em;color:#9ca3af;">DIGITAL</span>
-              </span>
+                <span style="font-size:11px;font-weight:600;letter-spacing:0.22em;color:#9ca3af;">DIGITAL</span>
+              </div>
             </td>
           </tr>
+          <tr><td style="height:3px;line-height:3px;font-size:0;background-color:#DC2626;">&nbsp;</td></tr>
 
           <!-- Hero -->
           <tr>
@@ -323,7 +336,7 @@ export function buildClientConfirmation(data = {}, opts = {}) {
 
           <!-- Footer -->
           <tr>
-            <td style="padding:26px 32px 30px;">
+            <td align="center" style="padding:26px 32px 30px;border-top:1px solid #eef0f2;">
               <div style="font-size:12px;color:#9ca3af;line-height:1.6;">
                 Този имейл е автоматично потвърждение за запитване, изпратено през сайта на
                 <span style="color:#6b7280;font-weight:700;">Just&nbsp;Pablo</span>.<br>
@@ -349,6 +362,7 @@ export function buildClientConfirmation(data = {}, opts = {}) {
     ...rawDetails.map(([label, value]) => `${label}: ${value}`),
     ...(phone ? [`Телефон: ${phone}`] : []),
     ...(site ? [`Сайт/бизнес: ${site}`] : []),
+    ...(socials ? [`Социални мрежи: ${socials}`] : []),
     '',
     contactEmail
       ? `Ако искате да допълните нещо, отговорете на този имейл или ни пишете на ${contactEmail}.`

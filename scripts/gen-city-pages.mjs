@@ -9,7 +9,7 @@
  * не може да се размине с H1 на страницата.
  */
 import { build } from 'esbuild'
-import { mkdtemp, readFile, rm, writeFile } from 'node:fs/promises'
+import { mkdtemp, rm, writeFile } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import path from 'node:path'
 import { fileURLToPath, pathToFileURL } from 'node:url'
@@ -34,18 +34,9 @@ async function loadCities() {
   }
 }
 
-/** Взима gtag + Meta Pixel блоковете от index.html, за да не се дублират тук. */
-async function loadTrackingSnippets() {
-  const html = await readFile(path.join(root, 'index.html'), 'utf8')
-  const start = html.indexOf('<!-- Google tag (gtag.js)')
-  const end = html.indexOf('<!-- End Meta Pixel Code -->')
-  if (start === -1 || end === -1) throw new Error('Не намирам tracking блоковете в index.html')
-  return html.slice(start, end + '<!-- End Meta Pixel Code -->'.length).trim()
-}
-
 const esc = s => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;')
 
-function pageHtml(city, site, tracking) {
+function pageHtml(city, site) {
   const url = `${site}/${city.slug}`
   const ogTitle = `Just Pablo Digital | Дигитален маркетинг ${city.inName}`
 
@@ -169,15 +160,10 @@ ${JSON.stringify(schema, null, 2)
   .map(l => '    ' + l)
   .join('\n')}
     </script>
-${tracking
-  .split('\n')
-  .map(l => (l.trim() ? '    ' + l : l))
-  .join('\n')}
+    <!-- GA4 и Meta Pixel НЕ се зареждат тук. Инжектират се от
+         src/lib/consent.ts ЕДВА след съгласие „Приемам" (GDPR). -->
   </head>
   <body>
-    <noscript><img height="1" width="1" style="display:none"
-      src="https://www.facebook.com/tr?id=1834416007939090&amp;ev=PageView&amp;noscript=1"
-    /></noscript>
     <div id="root"></div>
     <script type="module" src="/src/city.tsx"></script>
   </body>
@@ -198,11 +184,10 @@ ${urls.map(u => `  <url>\n    <loc>${u.loc}</loc>\n    <changefreq>monthly</chan
 }
 
 const { cities, SITE_URL } = await loadCities()
-const tracking = await loadTrackingSnippets()
 
 for (const city of cities) {
   const file = path.join(root, `${city.slug}.html`)
-  await writeFile(file, pageHtml(city, SITE_URL, tracking), 'utf8')
+  await writeFile(file, pageHtml(city, SITE_URL), 'utf8')
   console.log('✓', path.relative(root, file))
 }
 

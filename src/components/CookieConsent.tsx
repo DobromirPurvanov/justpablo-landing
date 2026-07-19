@@ -1,29 +1,23 @@
 import { useEffect, useState } from 'react'
+import { consentValue, saveConsent, loadTrackers, initConsent } from '../lib/consent'
 
 /* ────────────────────────────────────────────────────────────
    Cookie consent банер — показва се веднъж, изборът се пази в
-   localStorage. „Приемам" / „Само необходимите" + линк към политиката.
+   localStorage. „Приемам" зарежда GA/Meta Pixel; „Само необходимите"
+   не зарежда нищо. Реалното гейтване е в src/lib/consent.ts.
    ──────────────────────────────────────────────────────────── */
 
-const KEY = 'jp_cookie_consent'
-
 export default function CookieConsent() {
-  const [show, setShow] = useState(false)
+  const [show, setShow] = useState(() => {
+    try { return consentValue() === null } catch { return false }
+  })
 
-  useEffect(() => {
-    try {
-      if (!localStorage.getItem(KEY)) setShow(true)
-    } catch {
-      /* private mode и т.н. — просто не показваме */
-    }
-  }, [])
+  // Ако вече има съгласие „all" — пускаме трекерите при зареждане на страницата.
+  useEffect(() => { initConsent() }, [])
 
   const decide = (value: 'all' | 'necessary') => {
-    try {
-      localStorage.setItem(KEY, JSON.stringify({ v: value, at: new Date().toISOString() }))
-    } catch {
-      /* noop */
-    }
+    saveConsent(value)
+    if (value === 'all') loadTrackers()
     setShow(false)
   }
 
