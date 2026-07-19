@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import gsap from 'gsap'
 import { maskReveal } from '../lib/motion'
 import { loadRecaptcha, getRecaptchaToken } from '../lib/recaptcha'
+import { trackFormStart, trackFormStep, trackLead, trackFormError } from '../lib/analytics'
 import LogoFace from './LogoFace'
 
 /* ────────────────────────────────────────────────────────────
@@ -218,6 +219,7 @@ export default function ScrollWizard() {
 
   const startWizard = (brandType: string) => {
     setValue('brandType', brandType)
+    trackFormStart()
     const el = rootRef.current
     if (!el || prefersReduced()) { setPhase('wizard'); return }
     gsap.to(el, { opacity: 0, y: -20, duration: 0.3, ease: 'power2.in', onComplete: () => {
@@ -229,6 +231,10 @@ export default function ScrollWizard() {
   /* Смяна на стъпка: моментална, за да не забива съдържанието при анимации */
   const go = (target: number) => {
     if (target < 0 || target > questions.length - 1 || target === current) return
+    // Отчитаме само движение с една стъпка напред — така „назад" и скоковете
+    // от прегледа не се броят. Връщане и повторно минаване праща събитието
+    // пак; в GA се гледат уникалните потребители на стъпка, не сумата.
+    if (target === current + 1) trackFormStep(current, questions[current].id)
     setStepError('')
     setCurrent(target)
   }
@@ -323,6 +329,7 @@ export default function ScrollWizard() {
         throw new Error(data?.error || 'Грешка при изпращане на запитването.')
       }
       clearSaved()
+      trackLead()
       setIsSuccess(true)
     } catch (err: any) {
       // Технически съобщения (Failed to fetch, JSON parse…) не са за потребителя —
@@ -330,6 +337,7 @@ export default function ScrollWizard() {
       const human = typeof err?.message === 'string' && /[а-яА-Я]/.test(err.message)
       setStepError(human ? err.message : 'Неуспешно изпращане. Моля, опитайте отново.')
       setSubmitFailed(true)
+      trackFormError()
       shake()
     } finally {
       setIsSubmitting(false)

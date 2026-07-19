@@ -1,5 +1,7 @@
 /* ────────────────────────────────────────────────────────────
-   Имейл темплейт за известие при ново запитване (към екипа).
+   Имейл темплейти при ново запитване:
+   • buildInquiryEmail        — известие към екипа
+   • buildClientConfirmation  — потвърждение към клиента
    Table-based + inline стилове за максимална съвместимост
    (Gmail, Apple Mail, Outlook). Без външни ресурси.
    ──────────────────────────────────────────────────────────── */
@@ -31,6 +33,33 @@ function sentAtLabel() {
   }
 }
 
+/* Отговорите от формата в реда, в който клиентът ги е попълнил. Ползва се
+   и от двата имейла, за да не се разминават екипното копие и клиентското. */
+function projectDetails({ brandName, brandType, focus, goals, period, needs, budget }) {
+  return [
+    ['Дейност', brandName ? String(brandName) : '—'],
+    ['Тип бранд', brandType ? String(brandType) : '—'],
+    ['Фокус', formatList(focus)],
+    ['Цели', formatList(goals)],
+    ['Период', period ? String(period) : '—'],
+    ['Услуги', formatList(needs)],
+    ['Бюджет', budget ? String(budget) : '—'],
+  ]
+}
+
+function renderDetailRows(rows) {
+  return rows
+    .map(([label, value], i) => {
+      const border = i < rows.length - 1 ? 'border-bottom:1px solid #eef0f2;' : ''
+      return `
+              <tr>
+                <td style="padding:12px 16px;${border}font-size:13px;color:#6b7280;font-weight:500;vertical-align:top;width:36%;">${escapeHtml(label)}</td>
+                <td style="padding:12px 16px;${border}font-size:14px;color:#111827;font-weight:600;vertical-align:top;">${escapeHtml(value)}</td>
+              </tr>`
+    })
+    .join('')
+}
+
 /**
  * Изгражда съдържанието на имейла от данните на формата.
  * @param {object} data - данните от формата
@@ -55,26 +84,8 @@ export function buildInquiryEmail(data = {}, opts = {}) {
     : ''
 
   // Сурови стойности (за текстовата версия) + подредба на редовете
-  const rawDetails = [
-    ['Дейност', brandName ? String(brandName) : '—'],
-    ['Тип бранд', brandType ? String(brandType) : '—'],
-    ['Фокус', formatList(focus)],
-    ['Цели', formatList(goals)],
-    ['Период', period ? String(period) : '—'],
-    ['Услуги', formatList(needs)],
-    ['Бюджет', budget ? String(budget) : '—'],
-  ]
-
-  const detailRows = rawDetails
-    .map(([label, value], i) => {
-      const border = i < rawDetails.length - 1 ? 'border-bottom:1px solid #eef0f2;' : ''
-      return `
-              <tr>
-                <td style="padding:12px 16px;${border}font-size:13px;color:#6b7280;font-weight:500;vertical-align:top;width:36%;">${escapeHtml(label)}</td>
-                <td style="padding:12px 16px;${border}font-size:14px;color:#111827;font-weight:600;vertical-align:top;">${escapeHtml(value)}</td>
-              </tr>`
-    })
-    .join('')
+  const rawDetails = projectDetails({ brandName, brandType, focus, goals, period, needs, budget })
+  const detailRows = renderDetailRows(rawDetails)
 
   const safeName = escapeHtml(displayName)
   const safeEmail = escapeHtml(email)
@@ -208,9 +219,147 @@ ${spamWarningHtml}
     `Изпратено: ${sentAt}`,
   ].join('\n')
 
+  // Бюджетът и първата услуга влизат в темата, за да е възможен триаж от
+  // телефона без отваряне на имейла.
+  const needsList = Array.isArray(needs) ? needs : needs ? [String(needs)] : []
+  const subjectExtras = [
+    budget ? String(budget) : '',
+    needsList.length ? needsList[0] + (needsList.length > 1 ? ` +${needsList.length - 1}` : '') : '',
+  ].filter(Boolean)
+
   return {
     html,
     text: textContent,
-    subject: `Ново запитване от ${displayName}`,
+    subject: [`Ново запитване от ${displayName}`, ...subjectExtras].join(' · '),
+  }
+}
+
+/**
+ * Потвърждение към клиента: получихме запитването + копие от отговорите му,
+ * за да има следа в пощата си и да може да допълни, ако е пропуснал нещо.
+ * @param {object} data - данните от формата
+ * @param {object} [opts] - { replyTo?: string } — адрес за връзка, показан в имейла
+ * @returns {{ html: string, text: string, subject: string }}
+ */
+export function buildClientConfirmation(data = {}, opts = {}) {
+  const { name, phone, site, brandType, brandName, focus, goals, period, needs, budget } = data
+
+  const displayName = String(name || '').trim()
+  const firstName = displayName ? displayName.split(/\s+/)[0] : ''
+  const greeting = firstName ? `Здравейте, ${firstName}!` : 'Здравейте!'
+  const contactEmail = String(opts.replyTo || '').trim()
+  const sentAt = sentAtLabel()
+
+  const rawDetails = projectDetails({ brandName, brandType, focus, goals, period, needs, budget })
+  const detailRows = renderDetailRows(rawDetails)
+
+  const safeGreeting = escapeHtml(greeting)
+  const safeContact = escapeHtml(contactEmail)
+  const preheader = escapeHtml('Получихме запитването ви. Ще се свържем с вас до 24 часа.')
+
+  const contactLineHtml = contactEmail
+    ? `Ако искате да допълните нещо, просто отговорете на този имейл или ни пишете на
+                <a href="mailto:${safeContact}" style="color:#DC2626;font-weight:600;text-decoration:none;">${safeContact}</a>.`
+    : 'Ако искате да допълните нещо, просто отговорете на този имейл.'
+
+  const html = `<!DOCTYPE html>
+<html lang="bg" xmlns="http://www.w3.org/1999/xhtml">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="x-apple-disable-message-reformatting">
+  <title>Получихме запитването ви</title>
+</head>
+<body style="margin:0;padding:0;background-color:#f4f4f5;-webkit-font-smoothing:antialiased;">
+  <div style="display:none;max-height:0;overflow:hidden;opacity:0;mso-hide:all;">${preheader}</div>
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color:#f4f4f5;">
+    <tr>
+      <td align="center" style="padding:32px 16px;">
+        <table role="presentation" width="600" cellpadding="0" cellspacing="0" border="0" style="width:600px;max-width:100%;background-color:#ffffff;border-radius:18px;overflow:hidden;border:1px solid #e9eaec;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;">
+
+          <!-- Header -->
+          <tr>
+            <td style="background-color:#1a1a1a;padding:26px 32px;">
+              <span style="font-size:20px;font-weight:800;color:#ffffff;letter-spacing:-0.02em;">
+                Just Pablo <span style="color:#DC2626;">&bull;</span>
+                <span style="font-size:11px;font-weight:600;letter-spacing:0.18em;color:#9ca3af;">DIGITAL</span>
+              </span>
+            </td>
+          </tr>
+
+          <!-- Hero -->
+          <tr>
+            <td style="padding:34px 32px 0;">
+              <div style="font-size:26px;font-weight:800;color:#111827;letter-spacing:-0.02em;line-height:1.25;">${safeGreeting}</div>
+              <div style="font-size:15px;color:#4b5563;line-height:1.65;padding-top:12px;">
+                Благодарим ви, че се обърнахте към нас. Получихме запитването ви и вече го разглеждаме.
+                <strong style="color:#111827;">Ще се свържем с вас в рамките на 24 часа.</strong>
+              </div>
+            </td>
+          </tr>
+
+          <!-- Divider -->
+          <tr><td style="padding:26px 32px 0;"><div style="height:1px;line-height:1px;font-size:0;background-color:#eef0f2;">&nbsp;</div></td></tr>
+
+          <!-- Копие от отговорите -->
+          <tr>
+            <td style="padding:26px 32px 10px;">
+              <div style="font-size:12px;font-weight:700;letter-spacing:0.08em;color:#9ca3af;text-transform:uppercase;margin-bottom:14px;">Какво ни изпратихте</div>
+              <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color:#fafafa;border:1px solid #eef0f2;border-radius:12px;">
+                ${detailRows}
+              </table>
+            </td>
+          </tr>
+
+          <!-- Контакт -->
+          <tr>
+            <td style="padding:18px 32px 0;">
+              <div style="font-size:14px;color:#4b5563;line-height:1.65;">
+                ${contactLineHtml}
+              </div>
+            </td>
+          </tr>
+
+          <!-- Footer -->
+          <tr>
+            <td style="padding:26px 32px 30px;">
+              <div style="font-size:12px;color:#9ca3af;line-height:1.6;">
+                Този имейл е автоматично потвърждение за запитване, изпратено през сайта на
+                <span style="color:#6b7280;font-weight:700;">Just&nbsp;Pablo</span>.<br>
+                ${escapeHtml(sentAt)}
+              </div>
+            </td>
+          </tr>
+
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>`
+
+  const textContent = [
+    greeting,
+    '',
+    'Благодарим ви, че се обърнахте към нас. Получихме запитването ви и вече го разглеждаме.',
+    'Ще се свържем с вас в рамките на 24 часа.',
+    '',
+    '— Какво ни изпратихте —',
+    ...rawDetails.map(([label, value]) => `${label}: ${value}`),
+    ...(phone ? [`Телефон: ${phone}`] : []),
+    ...(site ? [`Сайт/бизнес: ${site}`] : []),
+    '',
+    contactEmail
+      ? `Ако искате да допълните нещо, отговорете на този имейл или ни пишете на ${contactEmail}.`
+      : 'Ако искате да допълните нещо, просто отговорете на този имейл.',
+    '',
+    `Just Pablo Digital · ${sentAt}`,
+  ].join('\n')
+
+  return {
+    html,
+    text: textContent,
+    subject: 'Получихме запитването ви — Just Pablo',
   }
 }

@@ -1,10 +1,38 @@
 import { Resend } from 'resend'
-import { buildInquiryEmail } from './email-template.js'
+import { buildInquiryEmail, buildClientConfirmation } from './email-template.js'
+
+/* Адрес, на който клиентът може да отговори на потвърждението. Домейнът
+   just-pablo.com няма MX записи, така че from-адресът НЕ приема поща —
+   Reply-To трябва да сочи към реална кутия, иначе отговорите се губят. */
+const DEFAULT_CLIENT_REPLY_TO = 'adsjustpablo@gmail.com'
+
+const MAX_FIELD_LENGTH = 500
+const MAX_LIST_ITEMS = 20
 
 function parseBody(req) {
   if (Buffer.isBuffer(req.body)) return JSON.parse(req.body.toString())
   if (typeof req.body === 'string') return JSON.parse(req.body)
   return req.body || {}
+}
+
+const isEmail = (v) => /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(String(v).trim())
+
+/* Формата е публична — ограничаваме дължините, за да не се озове мегабайтов
+   низ в имейла. Реже се тихо: не бива валидно запитване да пропадне заради
+   твърде дълъг отговор. */
+function clamp(value) {
+  if (Array.isArray(value)) return value.slice(0, MAX_LIST_ITEMS).map(clamp)
+  if (value == null) return value
+  return String(value).trim().slice(0, MAX_FIELD_LENGTH)
+}
+
+function sanitizeBody(body) {
+  const fields = ['brandType', 'brandName', 'focus', 'goals', 'period', 'needs', 'budget', 'name', 'email', 'phone', 'site']
+  const out = {}
+  for (const key of fields) {
+    if (body[key] !== undefined) out[key] = clamp(body[key])
+  }
+  return out
 }
 
 /* Google reCAPTCHA v3 — оценяваме, но НЕ блокираме. Целта е да не губим
@@ -53,18 +81,22 @@ export default async function handler(req, res) {
   }
 
   try {
-    const body = parseBody(req)
+    const raw = parseBody(req)
+    const body = sanitizeBody(raw)
     const { name, email } = body
 
-    if (!name || !String(name).trim() || !email || !String(email).trim()) {
+    if (!name || !email) {
       return res.status(400).json({ success: false, error: 'Име и имейл са задължителни.' })
+    }
+    if (!isEmail(email)) {
+      return res.status(400).json({ success: false, error: 'Моля, въведете валиден имейл адрес.' })
     }
 
     // reCAPTCHA само маркира съмнителните — никога не блокира (за да не губим клиенти).
-    const rc = await assessRecaptcha(body.recaptchaToken)
+    const rc = await assessRecaptcha(raw.recaptchaToken)
     if (rc.suspicious) console.warn('reCAPTCHA маркира заявка като съмнителна:', rc.note)
 
-    const { html: htmlContent, text: textContent, subject } = buildInquiryEmail(body, { spamNote: rc.note })
+    const teamEmail = buildInquiryEmail(body, { spamNote: rc.note })
 
     const recipients = [
       process.env.TO_EMAIL_PRIMARY,
@@ -72,36 +104,53 @@ export default async function handler(req, res) {
     ].filter(Boolean)
 
     if (!recipients.length) {
-      return res.status(500).json({ success: false, error: 'No recipients configured' })
+      console.error('Missing TO_EMAIL_PRIMARY / TO_EMAIL_SECONDARY environment variables')
+      return res.status(500).json({ success: false, error: 'Email service is not configured' })
     }
 
     const fromAddress = process.env.FROM_EMAIL || 'Just Pablo <zapitvane@just-pablo.com>'
-    console.log('[send-email] from:', fromAddress, '| to:', recipients, '| FROM_EMAIL set:', Boolean(process.env.FROM_EMAIL))
     const resend = new Resend(apiKey)
 
-    const results = await Promise.allSettled(
-      recipients.map((to) =>
-        resend.emails.send({
-          from: fromAddress,
-          to,
-          subject,
-          html: htmlContent,
-          text: textContent,
-          reply_to: email || undefined,
-        })
-      )
-    )
-
-    const failures = results.filter((r) => r.status === 'rejected')
-    if (failures.length === results.length) {
-      const messages = failures.map((f) => (f.reason instanceof Error ? f.reason.message : String(f.reason)))
-      console.error('Resend send failed:', messages)
-      return res.status(500).json({ success: false, error: messages[0] || 'Email sending failed' })
+    /* Едно писмо до всички получатели (не по едно на човек) — така екипът има
+       общ thread и Reply-All стига до колегите, вместо да се дублират кутии. */
+    try {
+      const { error } = await resend.emails.send({
+        from: fromAddress,
+        to: recipients,
+        subject: teamEmail.subject,
+        html: teamEmail.html,
+        text: teamEmail.text,
+        // Полето на SDK-а е replyTo (camelCase); reply_to се игнорира тихо.
+        replyTo: email,
+      })
+      if (error) throw new Error(error.message || 'Resend rejected the notification')
+    } catch (err) {
+      console.error('[send-email] известието към екипа се провали:', err)
+      return res.status(500).json({ success: false, error: 'Email sending failed' })
     }
 
-    return res.status(200).json({ success: true, data: results })
+    /* Потвърждението към клиента е второстепенно: ако то се провали, запитването
+       вече е стигнало до екипа и не бива да показваме грешка на клиента. */
+    const clientReplyTo = process.env.CLIENT_REPLY_TO || DEFAULT_CLIENT_REPLY_TO
+    try {
+      const confirmation = buildClientConfirmation(body, { replyTo: clientReplyTo })
+      const { error } = await resend.emails.send({
+        from: fromAddress,
+        to: email,
+        subject: confirmation.subject,
+        html: confirmation.html,
+        text: confirmation.text,
+        replyTo: clientReplyTo,
+      })
+      if (error) throw new Error(error.message || 'Resend rejected the confirmation')
+    } catch (err) {
+      console.error('[send-email] потвърждението към клиента се провали:', err)
+    }
+
+    return res.status(200).json({ success: true })
   } catch (error) {
-    console.error('Resend error:', error)
-    return res.status(500).json({ success: false, error: error.message || 'Unexpected error' })
+    // Подробностите остават в лога — навън не изтичат вътрешни съобщения.
+    console.error('[send-email] неочаквана грешка:', error)
+    return res.status(500).json({ success: false, error: 'Неуспешно изпращане. Моля, опитайте отново.' })
   }
 }
