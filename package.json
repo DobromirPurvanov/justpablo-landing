@@ -5,9 +5,10 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "tsc -b && vite build",
+    "build": "npm run gen:cities && tsc -b && vite build",
     "lint": "eslint .",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "gen:cities": "node scripts/gen-city-pages.mjs"
   },
   "dependencies": {
     "gsap": "^3.15.0",

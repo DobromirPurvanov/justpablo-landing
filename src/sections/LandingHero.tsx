@@ -4,10 +4,20 @@ import { ScrollTrigger } from 'gsap/ScrollTrigger'
 import LogoFace from '../components/LogoFace'
 import PromoCountdown from '../components/PromoCountdown'
 import { scrollToId } from '../lib/scroll'
+import type { City } from '../lib/cities'
 
 gsap.registerPlugin(ScrollTrigger)
 
-export default function LandingHero() {
+const DEFAULT_LINES: [string, string, string] = ['Дигитален', 'маркетинг и', 'бизнес развитие']
+const DEFAULT_SUB =
+  'Ние сме агенцията, изградена върху най-голямата инфлуенсър платформа в България. Работим с данни в реално време и native подход, а резултатите се броят.'
+
+export default function LandingHero({ city }: { city?: City }) {
+  // H1 и подзаглавието са единственият текст, който се сменя в hero-я на
+  // локалните страници — той трябва да съвпада с <title> на съответния град.
+  const lines = city?.heroLines ?? DEFAULT_LINES
+  const sub = city?.heroSub ?? DEFAULT_SUB
+
   const sectionRef = useRef<HTMLDivElement>(null)
   const titleRef = useRef<HTMLHeadingElement>(null)
 
@@ -72,13 +82,13 @@ export default function LandingHero() {
           </button>
 
           <h1 ref={titleRef} className="font-thin-display text-[clamp(36px,6.5vw,96px)] text-[#1A1A1A] leading-[1.02] lg:max-w-[66%]">
-            <span className="block overflow-hidden pb-[0.14em] -mb-[0.14em]"><span className="hero-line block">Дигитален</span></span>{' '}
-            <span className="block overflow-hidden pb-[0.14em] -mb-[0.14em]"><span className="hero-line block">маркетинг и</span></span>{' '}
-            <span className="block overflow-hidden pb-[0.14em] -mb-[0.14em]"><span className="hero-line block text-[#DC2626]">бизнес развитие</span></span>
+            <span className="block overflow-hidden pb-[0.14em] -mb-[0.14em]"><span className="hero-line block">{lines[0]}</span></span>{' '}
+            <span className="block overflow-hidden pb-[0.14em] -mb-[0.14em]"><span className="hero-line block">{lines[1]}</span></span>{' '}
+            <span className="block overflow-hidden pb-[0.14em] -mb-[0.14em]"><span className="hero-line block text-[#DC2626]">{lines[2]}</span></span>
           </h1>
 
           <p className="hero-sub mt-8 text-base lg:text-lg font-light text-[#1A1A1A]/60 max-w-md leading-relaxed">
-            Ние сме агенцията, изградена върху най-голямата инфлуенсър платформа в България. Работим с данни в реално време и native подход, а резултатите се броят.
+            {sub}
           </p>
 
           <PromoCountdown className="mt-8" />

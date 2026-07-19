@@ -1,4 +1,5 @@
 import LogoFace from '../components/LogoFace'
+import { cities } from '../lib/cities'
 
 export default function LandingFooter() {
   return (
@@ -14,7 +15,7 @@ export default function LandingFooter() {
       <div className="section-padding py-14 lg:py-16">
         <div className="container-max">
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-10">
-            <div className="lg:col-span-5">
+            <div className="lg:col-span-4">
               <div className="inline-flex items-center gap-3 mb-6">
                 <span className="flex items-center justify-center w-11 h-11 rounded-xl bg-white p-1.5 shrink-0">
                   <img src="./images/logo-mark.png" alt="Just Pablo Digital" loading="lazy" decoding="async" width={329} height={329} className="w-full h-full object-contain" />
@@ -28,10 +29,27 @@ export default function LandingFooter() {
                 Дигитална агенция, изградена върху най-голямата инфлуенсър платформа в България. Native подход, данни в реално време, измерими резултати.
               </p>
             </div>
-            <div className="lg:col-span-4">
+            <div className="lg:col-span-3">
               <div className="text-[10px] uppercase tracking-[0.18em] font-medium text-white/55 mb-4">Контакти</div>
               <a href="mailto:adsjustpablo@gmail.com" className="inline-block text-sm text-[#DC2626] hover:text-white transition-colors mb-2 py-2.5 -my-1.5">adsjustpablo@gmail.com</a>
               <div className="text-sm font-light text-white/60">България</div>
+            </div>
+            {/* Вътрешно свързване към локалните страници — оттук ботовете
+                намират /varna, /sofia и т.н. от всяка страница на сайта. */}
+            <div className="lg:col-span-2">
+              <div className="text-[10px] uppercase tracking-[0.18em] font-medium text-white/55 mb-4">Градове</div>
+              <ul className="space-y-1">
+                {cities.map(c => (
+                  <li key={c.slug}>
+                    <a
+                      href={`./${c.slug}`}
+                      className="inline-block text-sm font-light text-white/60 hover:text-white transition-colors py-1.5"
+                    >
+                      Дигитален маркетинг {c.inName}
+                    </a>
+                  </li>
+                ))}
+              </ul>
             </div>
             <div className="lg:col-span-3">
               <div className="text-[10px] uppercase tracking-[0.18em] font-medium text-white/55 mb-4">Последвайте ни</div>
@@ -54,8 +72,8 @@ export default function LandingFooter() {
           <div className="mt-12 pt-6 border-t border-white/10 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 text-xs font-light text-white/55">
             <span>© {new Date().getFullYear()} Just Pablo Digital. Всички права запазени.</span>
             <span className="flex items-center gap-5">
-              <a href="./biskvitki.html" className="hover:text-white transition-colors inline-block py-3 -my-1.5">Политика за бисквитки</a>
-              <a href="./poveritelnost.html" className="hover:text-white transition-colors inline-block py-3 -my-1.5">Защита на личните данни</a>
+              <a href="./biskvitki" className="hover:text-white transition-colors inline-block py-3 -my-1.5">Политика за бисквитки</a>
+              <a href="./poveritelnost" className="hover:text-white transition-colors inline-block py-3 -my-1.5">Защита на личните данни</a>
             </span>
           </div>
         </div>

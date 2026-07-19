@@ -13,12 +13,16 @@ import ScrollWizard from './components/ScrollWizard'
 import LandingFooter from './sections/LandingFooter'
 import CookieConsent from './components/CookieConsent'
 import StickyPromo from './components/StickyPromo'
+import CityLocal from './sections/CityLocal'
+import type { City } from './lib/cities'
 
 gsap.registerPlugin(ScrollTrigger)
 
 type LenisLike = { scrollTo: (target: number | HTMLElement, opts?: { offset?: number }) => void }
 
-export default function App() {
+/** `city` е зададен само на локалните страници (/varna, /sofia, ...) —
+    на началната страница остава undefined и нищо не се променя. */
+export default function App({ city }: { city?: City } = {}) {
   useEffect(() => {
     const lenis = new Lenis({ duration: 1.2, smoothWheel: true })
     ;(window as unknown as { __lenis?: LenisLike }).__lenis = lenis
@@ -40,8 +44,9 @@ export default function App() {
       <div id="top" />
       <LandingNav />
       <main>
-        <LandingHero />
+        <LandingHero city={city} />
         <StatsBand />
+        {city && <CityLocal city={city} />}
         <Pillars />
         <PriceSpotlight />
         <Marquee />
