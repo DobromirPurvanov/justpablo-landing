@@ -95,26 +95,39 @@
       ]
     }
     </script>
-    <!-- Google tag (gtag.js) -->
-    <script async src="https://www.googletagmanager.com/gtag/js?id=G-JTNZ4WYG32"></script>
+    <!-- Google tag (gtag.js) — само в продукция.
+         Vercel preview деплоите (*.vercel.app) и localhost при разработка
+         иначе пращат данни в същия профил и се броят като реални клиенти. -->
     <script>
       window.dataLayer = window.dataLayer || [];
       function gtag(){dataLayer.push(arguments);}
-      gtag('js', new Date());
-      gtag('config', 'G-JTNZ4WYG32');
+      (function () {
+        var host = location.hostname;
+        if (host !== 'just-pablo.com' && host !== 'www.just-pablo.com') return;
+        var s = document.createElement('script');
+        s.async = true;
+        s.src = 'https://www.googletagmanager.com/gtag/js?id=G-JTNZ4WYG32';
+        document.head.appendChild(s);
+        gtag('js', new Date());
+        gtag('config', 'G-JTNZ4WYG32');
+      })();
     </script>
-    <!-- Meta Pixel Code -->
+    <!-- Meta Pixel Code — също само в продукция, по същата причина. -->
     <script>
-      !function(f,b,e,v,n,t,s)
-      {if(f.fbq)return;n=f.fbq=function(){n.callMethod?
-      n.callMethod.apply(n,arguments):n.queue.push(arguments)};
-      if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';
-      n.queue=[];t=b.createElement(e);t.async=!0;
-      t.src=v;s=b.getElementsByTagName(e)[0];
-      s.parentNode.insertBefore(t,s)}(window, document,'script',
-      'https://connect.facebook.net/en_US/fbevents.js');
-      fbq('init', '1834416007939090');
-      fbq('track', 'PageView');
+      (function () {
+        var host = location.hostname;
+        if (host !== 'just-pablo.com' && host !== 'www.just-pablo.com') return;
+        !function(f,b,e,v,n,t,s)
+        {if(f.fbq)return;n=f.fbq=function(){n.callMethod?
+        n.callMethod.apply(n,arguments):n.queue.push(arguments)};
+        if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';
+        n.queue=[];t=b.createElement(e);t.async=!0;
+        t.src=v;s=b.getElementsByTagName(e)[0];
+        s.parentNode.insertBefore(t,s)}(window, document,'script',
+        'https://connect.facebook.net/en_US/fbevents.js');
+        fbq('init', '1834416007939090');
+        fbq('track', 'PageView');
+      })();
     </script>
     <!-- End Meta Pixel Code -->
   </head>
