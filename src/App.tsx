@@ -9,6 +9,7 @@ import StatsBand from './components/StatsBand'
 import Pillars from './sections/Pillars'
 import PriceSpotlight from './sections/PriceSpotlight'
 import Marquee from './sections/Marquee'
+import Faq from './sections/Faq'
 import ScrollWizard from './components/ScrollWizard'
 import LandingFooter from './sections/LandingFooter'
 import CookieConsent from './components/CookieConsent'
@@ -50,6 +51,7 @@ export default function App({ city }: { city?: City } = {}) {
         <Pillars />
         <PriceSpotlight />
         <Marquee />
+        {!city && <Faq />}
         <section id="zapitvane">
           <ScrollWizard />
         </section>
