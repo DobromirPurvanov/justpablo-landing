@@ -38,7 +38,7 @@ export default function Pillars() {
   }, [])
 
   return (
-    <section ref={ref} className="bg-white py-20 lg:py-28 border-t border-[#1A1A1A]/[0.06]">
+    <section ref={ref} id="zashto" className="bg-white py-20 lg:py-28 border-t border-[#1A1A1A]/[0.06]">
       <div className="section-padding">
         <div className="container-max">
           <span className="pl-label eyebrow mb-5">Защо Just Pablo</span>

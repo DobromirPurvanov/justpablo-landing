@@ -20,7 +20,7 @@ export default function LandingNav() {
         scrolled ? 'bg-white/85 backdrop-blur-md shadow-[0_1px_0_rgba(26,26,26,0.07)]' : 'bg-transparent'
       }`}
     >
-      <div className="flex items-center justify-between px-5 lg:px-8 py-3">
+      <div className="container-max section-padding flex items-center justify-between py-3">
         <a
           href="#top"
           onClick={e => { e.preventDefault(); scrollToTop() }}
@@ -33,6 +33,24 @@ export default function LandingNav() {
             <span className="text-[9px] font-bold uppercase tracking-[0.3em] text-[#DC2626] mt-1">Digital</span>
           </span>
         </a>
+
+        {/* Секционни връзки — запълват иначе празната среда на хедъра.
+            Само anchor-и, които съществуват и на градовите страници. */}
+        <nav className="hidden lg:flex items-center gap-9" aria-label="Секции">
+          {[
+            { id: 'zashto', label: 'Защо ние' },
+            { id: 'cena', label: 'Цена' },
+            { id: 'contacts', label: 'Контакти' },
+          ].map(l => (
+            <button
+              key={l.id}
+              onClick={() => scrollToId(l.id)}
+              className="text-sm font-medium text-[#1A1A1A]/60 hover:text-[#1A1A1A] transition-colors duration-200"
+            >
+              {l.label}
+            </button>
+          ))}
+        </nav>
 
         <button
           onClick={() => scrollToId('zapitvane')}
