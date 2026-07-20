@@ -20,6 +20,12 @@ export default function LandingNav() {
         scrolled ? 'bg-white/85 backdrop-blur-md shadow-[0_1px_0_rgba(26,26,26,0.07)]' : 'bg-transparent'
       }`}
     >
+      <a
+        href="#main-content"
+        className="sr-only focus:not-sr-only focus:absolute focus:top-2 focus:left-2 focus:z-[60] focus:bg-[#1A1A1A] focus:text-white focus:px-4 focus:py-2 focus:rounded-full focus:text-sm focus:font-medium"
+      >
+        Към съдържанието
+      </a>
       <div className="container-max section-padding flex items-center justify-between py-3">
         <a
           href="#top"

@@ -2,6 +2,7 @@ import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 import App from './App'
 import { getCity } from './lib/cities'
+import './fonts'
 import './index.css'
 
 /** Общ entry за всички локални страници. Кой е градът се чете от

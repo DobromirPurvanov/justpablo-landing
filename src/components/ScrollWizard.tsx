@@ -135,33 +135,43 @@ const isAnswered = (data: Record<string, unknown>, id: string) => {
 }
 const emailOk = (v: string) => /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(v.trim())
 
+type FormValue = string | string[] | boolean
+type WizardData = Record<string, FormValue>
+/** Само текстовите стъпки държат string — за &lt;input value&gt;. */
+const asText = (v: FormValue | undefined) => (typeof v === 'string' ? v : '')
+type Saved = { formData: WizardData; current: number; phase: 'intro' | 'wizard' }
+
 export default function ScrollWizard() {
   const [phase, setPhase] = useState<'intro' | 'wizard'>('intro')
   const [current, setCurrent] = useState(0)
-  const [formData, setFormData] = useState<Record<string, any>>({})
+  const [formData, setFormData] = useState<WizardData>({})
   const [isSuccess, setIsSuccess] = useState(false)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [stepError, setStepError] = useState('')
   const [submitFailed, setSubmitFailed] = useState(false)
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({})
-  const [resume, setResume] = useState<{ formData: Record<string, any>; current: number; phase: 'intro' | 'wizard' } | null>(null)
+  // Предложение за продължаване от запазена чернова — изчислено веднъж при init.
+  const [resume, setResume] = useState<Saved | null>(() => {
+    try {
+      const raw = localStorage.getItem(STORAGE_KEY)
+      if (!raw) return null
+      const saved = JSON.parse(raw)
+      if (saved && saved.formData && Object.keys(saved.formData).length > 0) return saved
+    } catch { /* private mode и т.н. — тихо */ }
+    return null
+  })
   const rootRef = useRef<HTMLDivElement>(null)
   const contentRef = useRef<HTMLDivElement>(null)        // desktop скрол-зона в кръга
   const mobileScrollRef = useRef<HTMLDivElement>(null)   // mobile скрол-зона в картата
   const [moreBelow, setMoreBelow] = useState(false)      // има ли още съдържание надолу (desktop индикатор)
   // На touch устройства не отваряме клавиатурата насила при смяна на стъпка
   const finePointer = useRef(typeof window !== 'undefined' && window.matchMedia('(pointer: fine)').matches)
+  // Огледало на current за auto-advance проверката (виж radio onClick).
+  const currentRef = useRef(current)
+  useEffect(() => { currentRef.current = current }, [current])
 
-  /* ─── Auto-save: запис при всяка промяна, предложение за продължаване при връщане ─── */
-  useEffect(() => {
-    try {
-      const raw = localStorage.getItem(STORAGE_KEY)
-      if (!raw) return
-      const saved = JSON.parse(raw)
-      if (saved && saved.formData && Object.keys(saved.formData).length > 0) setResume(saved)
-    } catch { /* private mode и т.н. — тихо */ }
-  }, [])
-
+  /* ─── Auto-save: запис при всяка промяна (предложението за продължаване
+     се чете веднъж при init, виж resume по-горе) ─── */
   useEffect(() => {
     if (isSuccess) return
     try {
@@ -184,7 +194,7 @@ export default function ScrollWizard() {
     if (phase === 'wizard') loadRecaptcha().catch(() => { /* ще опитаме пак при submit */ })
   }, [phase])
 
-  const setValue = (id: string, value: any) => {
+  const setValue = (id: string, value: FormValue) => {
     setFormData(prev => ({ ...prev, [id]: value }))
     setStepError('')
     setFieldErrors(prev => { const n = { ...prev }; delete n[id]; return n })
@@ -316,12 +326,19 @@ export default function ScrollWizard() {
     setIsSubmitting(true)
     setStepError('')
     setSubmitFailed(false)
+    const controller = new AbortController()
+    const timeout = window.setTimeout(() => controller.abort(), 15000)
     try {
-      const recaptchaToken = await getRecaptchaToken('submit')
+      // reCAPTCHA не бива да блокира изпращането, ако заигне — даваме ѝ до 8s.
+      const recaptchaToken = await Promise.race([
+        getRecaptchaToken('submit'),
+        new Promise<null>(r => window.setTimeout(() => r(null), 8000)),
+      ])
       const res = await fetch('/api/send-email', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ ...formData, recaptchaToken }),
+        signal: controller.signal,
       })
       // Отговорът може да не е JSON (таймаут, CDN/прокси грешка) — не оставяме
       // суровото изключение да стигне до потребителя.
@@ -332,15 +349,20 @@ export default function ScrollWizard() {
       clearSaved()
       trackLead()
       setIsSuccess(true)
-    } catch (err: any) {
+    } catch (err) {
       // Технически съобщения (Failed to fetch, JSON parse…) не са за потребителя —
       // показваме ги само ако са наши (на кирилица), иначе разбираем текст.
-      const human = typeof err?.message === 'string' && /[а-яА-Я]/.test(err.message)
-      setStepError(human ? err.message : 'Неуспешно изпращане. Моля, опитайте отново.')
+      const aborted = err instanceof DOMException && err.name === 'AbortError'
+      const msg = err instanceof Error ? err.message : ''
+      const human = /[а-яА-Я]/.test(msg)
+      setStepError(aborted
+        ? 'Изпращането отне твърде дълго. Моля, опитайте отново.'
+        : human ? msg : 'Неуспешно изпращане. Моля, опитайте отново.')
       setSubmitFailed(true)
       trackFormError()
       shake()
     } finally {
+      window.clearTimeout(timeout)
       setIsSubmitting(false)
     }
   }
@@ -410,11 +432,12 @@ export default function ScrollWizard() {
   }
 
   /* ─── Опция (radio/checkbox) — кутийка по спека, 48px touch target ─── */
-  const OptionButton = ({ opt, selected, onClick, role }: { opt: string; selected: boolean; onClick: () => void; role: 'radio' | 'checkbox' }) => (
+  const OptionButton = ({ opt, selected, onClick, role, tabIndex }: { opt: string; selected: boolean; onClick: () => void; role: 'radio' | 'checkbox'; tabIndex?: number }) => (
     <button
       type="button"
       role={role}
       aria-checked={selected}
+      tabIndex={tabIndex}
       onClick={onClick}
       className={`wz-opt w-full min-h-[48px] lg:min-h-[40px] px-5 lg:px-6 py-3 lg:py-1.5 rounded-full border-2 flex items-center gap-3 text-sm lg:text-base font-semibold leading-snug text-left transition-all duration-200 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#DC2626] ${
         selected
@@ -470,11 +493,37 @@ export default function ScrollWizard() {
       )}
 
       {q.type === 'radio' && q.options && (
-        <div role="radiogroup" aria-label={q.title} className="flex flex-col gap-2.5 lg:gap-1.5 w-full">
-          {q.options.map(opt => (
-            <OptionButton key={opt} opt={opt} role="radio" selected={formData[q.id] === opt}
-              onClick={() => { setValue(q.id, opt); window.setTimeout(() => go(current + 1), 280) }} />
-          ))}
+        <div
+          role="radiogroup"
+          aria-label={q.title}
+          className="flex flex-col gap-2.5 lg:gap-1.5 w-full"
+          onKeyDown={e => {
+            if (!['ArrowDown', 'ArrowRight', 'ArrowUp', 'ArrowLeft'].includes(e.key)) return
+            e.preventDefault()
+            const btns = Array.from(e.currentTarget.querySelectorAll<HTMLButtonElement>('[role="radio"]'))
+            const idx = btns.findIndex(b => b === document.activeElement)
+            const dir = e.key === 'ArrowDown' || e.key === 'ArrowRight' ? 1 : -1
+            const nextIdx = idx < 0 ? 0 : (idx + dir + btns.length) % btns.length
+            btns[nextIdx]?.focus()
+            // Стрелките само избират и местят фокуса — без auto-advance (иначе
+            // клавиатурната навигация би прескачала стъпки). Enter/клик придвижва.
+            setValue(q.id, q.options![nextIdx])
+          }}
+        >
+          {q.options.map((opt, idx) => {
+            const selIdx = q.options!.findIndex(o => formData[q.id] === o)
+            const roving = (selIdx < 0 ? idx === 0 : idx === selIdx) ? 0 : -1
+            return (
+              <OptionButton key={opt} opt={opt} role="radio" tabIndex={roving} selected={formData[q.id] === opt}
+                onClick={() => {
+                  const at = current
+                  setValue(q.id, opt)
+                  // Прескачаме напред само ако потребителят още е на тази стъпка
+                  // (иначе „Назад" в рамките на закъснението би бил презаписан).
+                  window.setTimeout(() => { if (currentRef.current === at) go(at + 1) }, 280)
+                }} />
+            )
+          })}
         </div>
       )}
 
@@ -501,7 +550,7 @@ export default function ScrollWizard() {
         <div className="w-full">
           <input
             type="text"
-            value={formData[q.id] || ''}
+            value={asText(formData[q.id])}
             onChange={e => setValue(q.id, e.target.value)}
             onKeyDown={e => { if (e.key === 'Enter') next() }}
             enterKeyHint="next"
@@ -523,9 +572,17 @@ export default function ScrollWizard() {
                 id={`wz-field-${f.id}`}
                 type={f.type}
                 data-field={f.id}
-                value={formData[f.id] || ''}
+                value={asText(formData[f.id])}
                 onChange={e => setValue(f.id, e.target.value)}
                 onBlur={() => validateContactField(f.id, formData[f.id])}
+                onKeyDown={e => {
+                  if (e.key !== 'Enter') return
+                  e.preventDefault()
+                  const idx = contactFields.findIndex(cf => cf.id === f.id)
+                  const nextField = contactFields[idx + 1]
+                  if (nextField) document.getElementById(`wz-field-${nextField.id}`)?.focus()
+                  else next()
+                }}
                 autoComplete={f.auto}
                 enterKeyHint={f.hint}
                 aria-invalid={Boolean(fieldErrors[f.id])}
@@ -558,20 +615,27 @@ export default function ScrollWizard() {
               </li>
             ))}
           </ul>
-          <button
-            type="button"
-            role="checkbox"
-            aria-checked={Boolean(formData.privacy)}
-            onClick={() => setValue('privacy', !formData.privacy)}
-            className="mt-3 lg:mt-2 flex items-start gap-3 text-left w-full py-2 lg:py-1 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#DC2626]"
-          >
-            <span className={`mt-0.5 w-5 h-5 rounded-[5px] border-2 flex items-center justify-center shrink-0 transition-colors duration-200 ${formData.privacy ? 'bg-[#DC2626] border-[#DC2626]' : 'border-[#1A1A1A]/30 bg-white'}`}>
-              {formData.privacy && <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="3.5"><polyline points="20 6 9 17 4 12" /></svg>}
-            </span>
-            <span className="text-xs font-light text-[#1A1A1A]/70 leading-relaxed">
-              Съгласен съм личните ми данни да бъдат обработени според <a href="./poveritelnost.html" target="_blank" rel="noopener" className="text-[#DC2626] underline underline-offset-2" onClick={e => e.stopPropagation()}>политиката за поверителност</a>.
-            </span>
-          </button>
+          {/* Native checkbox + отделен текст с линк — за да няма интерактивен
+             елемент (<a>) вложен в бутон (невалиден HTML). */}
+          <div className="mt-3 lg:mt-2 flex items-start gap-3">
+            <input
+              type="checkbox"
+              id="wz-privacy"
+              checked={Boolean(formData.privacy)}
+              onChange={() => setValue('privacy', !formData.privacy)}
+              aria-label="Съгласен съм личните ми данни да бъдат обработени според политиката за поверителност"
+              className="peer sr-only"
+            />
+            <label
+              htmlFor="wz-privacy"
+              className={`mt-0.5 w-5 h-5 rounded-[5px] border-2 flex items-center justify-center shrink-0 cursor-pointer transition-colors duration-200 peer-focus-visible:outline peer-focus-visible:outline-2 peer-focus-visible:outline-offset-2 peer-focus-visible:outline-[#DC2626] ${formData.privacy ? 'bg-[#DC2626] border-[#DC2626]' : 'border-[#1A1A1A]/30 bg-white'}`}
+            >
+              {formData.privacy && <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="3.5" aria-hidden="true"><polyline points="20 6 9 17 4 12" /></svg>}
+            </label>
+            <p className="text-xs font-light text-[#1A1A1A]/70 leading-relaxed">
+              Съгласен съм личните ми данни да бъдат обработени според <a href="./poveritelnost.html" target="_blank" rel="noopener" className="text-[#DC2626] underline underline-offset-2">политиката за поверителност</a>.
+            </p>
+          </div>
         </div>
       )}
 
@@ -811,8 +875,10 @@ export default function ScrollWizard() {
         </div>
       </div>
 
-      {/* ─── MOBILE: цял екран, фокусиран поток (sticky прогрес + винаги-видим CTA) ─── */}
-      <div data-lenis-prevent className="lg:hidden fixed inset-0 z-[70] bg-white flex flex-col">
+      {/* ─── MOBILE: цял екран, фокусиран поток (sticky прогрес + винаги-видим CTA).
+          Модал: z над промо-лентата (z-80) и cookie банера (z-90), за да не
+          изскачат върху формата, докато потребителят я попълва. ─── */}
+      <div data-lenis-prevent role="dialog" aria-modal="true" aria-label="Форма за запитване" className="lg:hidden fixed inset-0 z-[95] bg-white flex flex-col">
         {/* Горна лента: назад + брояч на стъпки + прогрес-лента */}
         <header className="shrink-0 px-5 pt-[max(env(safe-area-inset-top),18px)] pb-3.5 border-b border-[#F0F0F0]">
           <div className="flex items-center justify-between gap-3 mb-3">

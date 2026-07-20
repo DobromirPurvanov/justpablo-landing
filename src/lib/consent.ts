@@ -12,6 +12,26 @@ const KEY = 'jp_cookie_consent'
 const GA_ID = 'G-JTNZ4WYG32'
 const PIXEL_ID = '1834416007939090'
 
+type GtagFn = (...args: unknown[]) => void
+type FbqFn = {
+  (...args: unknown[]): void
+  callMethod?: (...args: unknown[]) => void
+  queue: unknown[]
+  loaded?: boolean
+  version?: string
+  push?: unknown
+}
+
+// Забележка: `gtag` е деклариран в src/lib/analytics.ts — не го предеклараираме
+// тук, за да няма конфликт на типове (GtagFn е присвоим на неговия тип).
+declare global {
+  interface Window {
+    dataLayer?: unknown[]
+    fbq?: FbqFn
+    _fbq?: FbqFn
+  }
+}
+
 /** Трекери се пускат само в реалната продукция — не на Vercel preview/localhost,
     за да не замърсяват данните с трафик от разработка. */
 function isProduction() {
@@ -38,36 +58,45 @@ export function saveConsent(value: 'all' | 'necessary') {
   }
 }
 
+function loadGA() {
+  const s = document.createElement('script')
+  s.async = true
+  s.src = `https://www.googletagmanager.com/gtag/js?id=${GA_ID}`
+  document.head.appendChild(s)
+  window.dataLayer = window.dataLayer || []
+  const gtag: GtagFn = (...args) => { window.dataLayer!.push(args) }
+  window.gtag = gtag
+  gtag('js', new Date())
+  gtag('config', GA_ID)
+}
+
+function loadMetaPixel() {
+  if (window.fbq) return
+  const fbq = ((...args: unknown[]) => {
+    if (fbq.callMethod) fbq.callMethod(...args)
+    else fbq.queue.push(args)
+  }) as FbqFn
+  fbq.queue = []
+  fbq.loaded = true
+  fbq.version = '2.0'
+  window.fbq = fbq
+  window._fbq = window._fbq || fbq
+  const t = document.createElement('script')
+  t.async = true
+  t.src = 'https://connect.facebook.net/en_US/fbevents.js'
+  document.head.appendChild(t)
+  fbq('init', PIXEL_ID)
+  fbq('track', 'PageView')
+}
+
 let loaded = false
 
 /** Инжектира GA4 + Meta Pixel. Идемпотентно. Вика се само при съгласие. */
 export function loadTrackers() {
   if (loaded || typeof window === 'undefined' || !isProduction()) return
   loaded = true
-
-  // Google Analytics 4
-  const w = window as unknown as { dataLayer: unknown[]; gtag: (...args: unknown[]) => void; fbq?: (...args: unknown[]) => void }
-  const s = document.createElement('script')
-  s.async = true
-  s.src = `https://www.googletagmanager.com/gtag/js?id=${GA_ID}`
-  document.head.appendChild(s)
-  w.dataLayer = w.dataLayer || []
-  w.gtag = function gtag() { w.dataLayer.push(arguments) }
-  w.gtag('js', new Date())
-  w.gtag('config', GA_ID)
-
-  // Meta Pixel
-  ;(function (f: any, b: Document, e: string, v: string) {
-    if (f.fbq) return
-    const n: any = (f.fbq = function () { n.callMethod ? n.callMethod.apply(n, arguments) : n.queue.push(arguments) })
-    if (!f._fbq) f._fbq = n
-    n.push = n; n.loaded = true; n.version = '2.0'; n.queue = []
-    const t = b.createElement(e) as HTMLScriptElement; t.async = true; t.src = v
-    const g = b.getElementsByTagName(e)[0]
-    g.parentNode!.insertBefore(t, g)
-  })(w, document, 'script', 'https://connect.facebook.net/en_US/fbevents.js')
-  w.fbq!('init', PIXEL_ID)
-  w.fbq!('track', 'PageView')
+  loadGA()
+  loadMetaPixel()
 }
 
 /** Вика се при зареждане на всяка страница: пуска трекерите само ако вече

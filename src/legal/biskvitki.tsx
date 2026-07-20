@@ -1,5 +1,6 @@
 import { createRoot } from 'react-dom/client'
 import LegalLayout from './LegalLayout'
+import '../fonts'
 import '../index.css'
 
 createRoot(document.getElementById('root')!).render(

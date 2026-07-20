@@ -12,7 +12,21 @@ npm run build    # продукционен build в dist/
 
 ## Деплой
 
-Статичен сайт без router — качва се навсякъде (Vercel, Netlify, GitHub Pages) без допълнителна конфигурация. `base: './'` е зададен, така че работи и в поддиректория.
+Vite MPA (няколко HTML входа, без клиентски router). Целта е **Vercel**:
+
+- `vercel.json` задава `cleanUrls: true` (за да работят `/varna`, `/sofia` без `.html`) и security headers (CSP, HSTS и др.).
+- `api/send-email.js` е Vercel serverless функция.
+- Build-ът е `npm run gen:cities && tsc -b && vite build` — първо се генерират локалните (градски) страници.
+
+При деплой на друг хостинг (Netlify и т.н.) трябва да се пренесат еквивалентни clean-URL пренаписвания и headers, иначе градските страници и сигурността няма да работят.
+
+## Локални (градски) SEO страници
+
+`src/lib/cities.ts` е единствен източник за градовете; `scripts/gen-city-pages.mjs` (`npm run gen:cities`) генерира `sofia.html`, `varna.html` и т.н. + `public/sitemap.xml` от него. Генерираните `*.html` са build артефакти — редактира се само `cities.ts`.
+
+## Аналитика и съгласие (GDPR)
+
+GA4 и Meta Pixel **не** се зареждат на page load. Инжектират се от `src/lib/consent.ts` едва след избор „Приемам" в cookie банера (и само на продукционния домейн). Идентификаторите са в `consent.ts`.
 
 ## Къде се редактира
 

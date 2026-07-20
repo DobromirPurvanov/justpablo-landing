@@ -5,6 +5,11 @@ gsap.registerPlugin(ScrollTrigger)
 
 export const EASE = 'power3.out'
 
+/** Уважава системното предпочитание за намалено движение. */
+const prefersReduced = () =>
+  typeof window !== 'undefined' &&
+  window.matchMedia('(prefers-reduced-motion: reduce)').matches
+
 type RevealOpts = {
   y?: number
   scale?: number
@@ -20,6 +25,7 @@ type RevealOpts = {
  * clearProps маха inline transform-а след края, за да не пречи на hover ефектите.
  */
 export function reveal(targets: gsap.TweenTarget, trigger: Element | null, opts: RevealOpts = {}) {
+  if (prefersReduced()) { gsap.set(targets, { opacity: 1, clearProps: 'transform' }); return }
   return gsap.from(targets, {
     y: opts.y ?? 28,
     scale: opts.scale ?? 1,
@@ -33,69 +39,11 @@ export function reveal(targets: gsap.TweenTarget, trigger: Element | null, opts:
   })
 }
 
-/* ─────────── Паралакс хелпъри (almero стил) ───────────
-   Работят само на desktop и при изключен prefers-reduced-motion.
-   Прилагат се върху обвивки/декорация — никога върху елемент,
-   който вече има entrance анимация на същото свойство. */
-
-const PARALLAX_MEDIA = '(min-width: 1024px) and (prefers-reduced-motion: no-preference)'
-
-/** Вертикален дрифт при скрол (фонови текстове, колони, декорация) */
-export function drift(target: gsap.TweenTarget, trigger: Element, opts: { from?: number; to?: number; scrub?: number } = {}) {
-  const mm = gsap.matchMedia()
-  mm.add(PARALLAX_MEDIA, () => {
-    gsap.fromTo(target,
-      { y: opts.from ?? 40 },
-      {
-        y: opts.to ?? -40,
-        ease: 'none',
-        scrollTrigger: { trigger, start: 'top bottom', end: 'bottom top', scrub: opts.scrub ?? 1 },
-      }
-    )
-  })
-  return mm
-}
-
-/** Хоризонтален дрифт (голямото "digital") */
-export function driftX(target: gsap.TweenTarget, trigger: Element, opts: { from?: number; to?: number; scrub?: number } = {}) {
-  const mm = gsap.matchMedia()
-  mm.add(PARALLAX_MEDIA, () => {
-    gsap.fromTo(target,
-      { x: opts.from ?? -40 },
-      {
-        x: opts.to ?? 40,
-        ease: 'none',
-        scrollTrigger: { trigger, start: 'top bottom', end: 'bottom top', scrub: opts.scrub ?? 1 },
-      }
-    )
-  })
-  return mm
-}
-
-/** Вътрешен паралакс на изображение в карта — подписът на almero.
-    Изображението е в scale-[1.15] обвивка и се движи вертикално,
-    докато рамката минава през viewport-а. */
-export function imageParallax(imgWrap: gsap.TweenTarget, frame: Element, opts: { amount?: number; scrub?: number } = {}) {
-  const a = opts.amount ?? 6.5
-  const mm = gsap.matchMedia()
-  mm.add(PARALLAX_MEDIA, () => {
-    gsap.fromTo(imgWrap,
-      { yPercent: -a },
-      {
-        yPercent: a,
-        ease: 'none',
-        scrollTrigger: { trigger: frame, start: 'top bottom', end: 'bottom top', scrub: opts.scrub ?? 0.8 },
-      }
-    )
-  })
-  return mm
-}
-
 /* ─────────── Word-by-word reveal (almero стил четене) ─────────── */
 
 /** Разбива текста на думи в span-ове, запазвайки вложените em/strong.
     Идемпотентно — при повторно извикване връща съществуващите. */
-export function splitWords(root: Element): HTMLElement[] {
+function splitWords(root: Element): HTMLElement[] {
   const existing = root.querySelectorAll<HTMLElement>('.w-split')
   if (existing.length) return Array.from(existing)
   const words: HTMLElement[] = []
@@ -135,6 +83,7 @@ export function splitWords(root: Element): HTMLElement[] {
 /** Думите "просветват" една по една, докато параграфът минава през екрана.
     Извиква се само при включени анимации — иначе текстът си е нормален. */
 export function wordsReveal(paragraph: Element) {
+  if (prefersReduced()) return
   const words = splitWords(paragraph)
   if (!words.length) return
   gsap.fromTo(words,
@@ -156,10 +105,11 @@ export function countUp(el: Element, opts: { delay?: number; duration?: number; 
   // (React StrictMode / HMR) четем вече занулен текст и целта става 0.
   const raw = (el as HTMLElement).dataset.countup ?? el.textContent ?? ''
   if (!(el as HTMLElement).dataset.countup) (el as HTMLElement).dataset.countup = raw
-  const m = raw.match(/^([+\-]?)(\d+)([\s\S]*)$/)
+  const m = raw.match(/^([+-]?)(\d+)([\s\S]*)$/)
   if (!m) return
   const [, prefix, numStr, suffix] = m
   const target = parseInt(numStr, 10)
+  if (prefersReduced()) { el.textContent = `${prefix}${target}${suffix}`; return }
   const state = { v: 0 }
   el.textContent = `${prefix}0${suffix}`
   gsap.to(state, {
@@ -176,6 +126,7 @@ export function countUp(el: Element, opts: { delay?: number; duration?: number; 
     съдържанието се плъзга нагоре иззад невидим ръб. Идемпотентно. */
 export function maskReveal(target: Element | null, trigger: Element | null, opts: { delay?: number; duration?: number; start?: string } = {}) {
   if (!target) return
+  if (prefersReduced()) return
   let inner = target.querySelector(':scope > .mask-inner') as HTMLElement | null
   if (!inner) {
     inner = document.createElement('div')
@@ -200,33 +151,4 @@ export function maskReveal(target: Element | null, trigger: Element | null, opts
       scrollTrigger: trigger ? { trigger, start: opts.start ?? 'top 85%', once: true } : undefined,
     }
   )
-}
-
-/** Медия, която се разкрива с clip отдолу нагоре + вътрешно отдалечаване (almero) */
-export function clipReveal(frame: Element | null, inner: Element | null, trigger: Element | null) {
-  if (!frame) return
-  const mm = gsap.matchMedia()
-  mm.add('(prefers-reduced-motion: no-preference)', () => {
-    gsap.fromTo(frame,
-      { clipPath: 'inset(0% 0% 100% 0%)' },
-      {
-        clipPath: 'inset(0% 0% 0% 0%)',
-        duration: 1.1,
-        ease: 'power3.out',
-        scrollTrigger: trigger ? { trigger, start: 'top 82%', once: true } : undefined,
-      }
-    )
-    if (inner) {
-      gsap.fromTo(inner,
-        { scale: 1.35 },
-        {
-          scale: 1.15,
-          duration: 1.3,
-          ease: 'power3.out',
-          scrollTrigger: trigger ? { trigger, start: 'top 82%', once: true } : undefined,
-        }
-      )
-    }
-  })
-  return mm
 }

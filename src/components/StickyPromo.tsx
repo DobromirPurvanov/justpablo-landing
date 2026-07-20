@@ -11,14 +11,11 @@ const KEY = 'jp_promo_bar_closed'
 
 export default function StickyPromo() {
   const [visible, setVisible] = useState(false)
-  const [closed, setClosed] = useState(false)
+  const [closed, setClosed] = useState(() => {
+    try { return !!sessionStorage.getItem(KEY) } catch { return false }
+  })
 
   useEffect(() => {
-    try {
-      if (sessionStorage.getItem(KEY)) setClosed(true)
-    } catch {
-      /* private mode — просто показваме */
-    }
     let ticking = false
     const update = () => {
       ticking = false
@@ -32,7 +29,7 @@ export default function StickyPromo() {
       }
     }
     window.addEventListener('scroll', onScroll, { passive: true })
-    update()
+    requestAnimationFrame(update)
     return () => window.removeEventListener('scroll', onScroll)
   }, [])
 
@@ -51,6 +48,7 @@ export default function StickyPromo() {
   return (
     <div
       role="status"
+      aria-hidden={!visible}
       className={`fixed z-[80] left-1/2 bottom-5 flex items-center gap-1 rounded-full bg-[#1A1A1A] text-white shadow-[0_12px_34px_rgba(0,0,0,0.28)] pl-1.5 pr-1.5 py-1.5 -translate-x-1/2 transition-all duration-500 ease-out ${
         visible ? 'opacity-100 translate-y-0 pointer-events-auto' : 'opacity-0 translate-y-6 pointer-events-none'
       }`}
@@ -58,6 +56,7 @@ export default function StickyPromo() {
       <button
         type="button"
         onClick={() => scrollToId('cena')}
+        tabIndex={visible ? undefined : -1}
         className="group inline-flex items-center gap-2.5 rounded-full pl-1 pr-2 py-1 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#DC2626]"
       >
         <span className="flex items-center justify-center w-8 h-8 rounded-full bg-[#DC2626] shrink-0 motion-safe:animate-pulse">
@@ -86,6 +85,7 @@ export default function StickyPromo() {
         type="button"
         onClick={close}
         aria-label="Затвори промоцията"
+        tabIndex={visible ? undefined : -1}
         className="flex items-center justify-center w-10 h-10 -my-1.5 rounded-full text-white/40 hover:text-white hover:bg-white/10 transition-colors shrink-0"
       >
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" aria-hidden="true">

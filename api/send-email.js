@@ -9,6 +9,28 @@ const DEFAULT_CLIENT_REPLY_TO = 'adsjustpablo@gmail.com'
 const MAX_FIELD_LENGTH = 500
 const MAX_LIST_ITEMS = 20
 
+/* Best-effort rate limiting на ниво „топъл" инстанс. Serverless инстансите са
+   много и се рециклират, така че това НЕ е желязна защита — но спира най-грубия
+   flood от един IP. За твърда защита: Vercel KV / Upstash. */
+const RATE_WINDOW_MS = 10 * 60 * 1000
+const RATE_MAX = 5
+const rateHits = new Map()
+
+function clientIp(req) {
+  const xff = req.headers['x-forwarded-for']
+  if (typeof xff === 'string' && xff) return xff.split(',')[0].trim()
+  return req.socket?.remoteAddress || 'unknown'
+}
+
+function isRateLimited(ip) {
+  const now = Date.now()
+  const recent = (rateHits.get(ip) || []).filter((t) => now - t < RATE_WINDOW_MS)
+  recent.push(now)
+  rateHits.set(ip, recent)
+  if (rateHits.size > 5000) rateHits.clear() // предпазен клапан срещу неограничен растеж
+  return recent.length > RATE_MAX
+}
+
 function parseBody(req) {
   if (Buffer.isBuffer(req.body)) return JSON.parse(req.body.toString())
   if (typeof req.body === 'string') return JSON.parse(req.body)
@@ -72,6 +94,10 @@ export default async function handler(req, res) {
   if (req.method !== 'POST') {
     res.setHeader('Allow', ['POST'])
     return res.status(405).json({ success: false, error: 'Method not allowed' })
+  }
+
+  if (isRateLimited(clientIp(req))) {
+    return res.status(429).json({ success: false, error: 'Твърде много заявки. Опитайте отново след няколко минути.' })
   }
 
   const apiKey = process.env.RESEND_API_KEY
