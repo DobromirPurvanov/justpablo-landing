@@ -50,7 +50,7 @@ export default function LandingHero({ city }: { city?: City }) {
       {/* Интерактивното лого — очите следват мишката */}
       <div className="hidden md:block absolute right-[1%] lg:right-[3%] top-[58%] -translate-y-1/2 w-[clamp(220px,26vw,440px)] z-[5]">
         <div className="face-inner">
-          <LogoFace />
+          <LogoFace sizes="(min-width: 768px) clamp(220px, 26vw, 440px), 329px" priority />
         </div>
       </div>
 
@@ -118,7 +118,7 @@ export default function LandingHero({ city }: { city?: City }) {
               (desktop версията е вдясно, абсолютно позиционирана) */}
           <div className="md:hidden mt-12 flex justify-center">
             <div className="face-inner w-[min(78vw,320px)]">
-              <LogoFace />
+              <LogoFace sizes="(max-width: 767px) min(78vw, 320px), 329px" priority />
             </div>
           </div>
         </div>

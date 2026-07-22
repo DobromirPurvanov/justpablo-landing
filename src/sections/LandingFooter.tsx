@@ -10,7 +10,7 @@ export default function LandingFooter() {
         aria-hidden="true"
         className="absolute bottom-full right-6 lg:right-16 w-[112px] h-[63px] lg:w-[176px] lg:h-[99px] overflow-hidden pointer-events-none select-none"
       >
-        <LogoFace className="w-full" />
+        <LogoFace className="w-full" sizes="(min-width: 1024px) 176px, 112px" />
       </div>
       <div className="section-padding py-14 lg:py-16">
         <div className="container-max">

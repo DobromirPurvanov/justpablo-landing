@@ -23,6 +23,20 @@ function cleanUrlsDev(): Plugin {
   }
 }
 
+/** Montserrat е self-hosted, но `font-display: swap` сменя системния шрифт
+    късно при бавна мрежа и измества hero съдържанието. `optional` запазва
+    първоначалния layout, а кешираният шрифт се използва при следващи зареждания. */
+function stableFontDisplay(): Plugin {
+  return {
+    name: 'stable-font-display',
+    enforce: 'pre',
+    transform(code, id) {
+      if (!id.includes('@fontsource/montserrat/') || !id.endsWith('.css')) return
+      return code.replaceAll('font-display: swap', 'font-display: optional')
+    },
+  }
+}
+
 // Локалните страници се генерират с `npm run gen:cities` от src/lib/cities.ts
 const cityInputs = Object.fromEntries(
   cities.map(c => [c.slug, path.resolve(__dirname, `${c.slug}.html`)])
@@ -31,7 +45,7 @@ const cityInputs = Object.fromEntries(
 // https://vite.dev/config/
 export default defineConfig({
   base: './',
-  plugins: [react(), cleanUrlsDev()],
+  plugins: [stableFontDisplay(), react(), cleanUrlsDev()],
   build: {
     rollupOptions: {
       input: {

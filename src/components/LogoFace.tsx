@@ -13,7 +13,13 @@ const TRAVEL_Y = 0.0213
  * Интерактивното лого: очите следват мишката.
  * На touch устройства се оглежда само̀, мига на случайни интервали.
  */
-export default function LogoFace({ className = '' }: { className?: string }) {
+type LogoFaceProps = {
+  className?: string
+  sizes?: string
+  priority?: boolean
+}
+
+export default function LogoFace({ className = '', sizes = '329px', priority = false }: LogoFaceProps) {
   const rootRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
@@ -82,7 +88,24 @@ export default function LogoFace({ className = '' }: { className?: string }) {
 
   return (
     <div ref={rootRef} className={`relative select-none pointer-events-none ${className}`} aria-hidden="true">
-      <img src="./images/face-base.png" alt="" width={329} height={329} className="w-full h-auto" draggable={false} />
+      <picture>
+        <source
+          type="image/webp"
+          srcSet="./images/face-base-329.webp 329w, ./images/face-base-658.webp 658w, ./images/face-base-987.webp 987w"
+          sizes={sizes}
+        />
+        <img
+          src="./images/face-base.png"
+          alt=""
+          width={329}
+          height={329}
+          className="block w-full h-auto"
+          loading={priority ? 'eager' : 'lazy'}
+          fetchPriority={priority ? 'high' : 'auto'}
+          decoding="async"
+          draggable={false}
+        />
+      </picture>
       {EYES.map(eye => (
         <div
           key={eye.name}
