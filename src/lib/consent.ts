@@ -64,7 +64,11 @@ function loadGA() {
   s.src = `https://www.googletagmanager.com/gtag/js?id=${GA_ID}`
   document.head.appendChild(s)
   window.dataLayer = window.dataLayer || []
-  const gtag: GtagFn = (...args) => { window.dataLayer!.push(args) }
+  // gtag.js обработва само `arguments` обекти в dataLayer — обикновени масиви се игнорират тихо.
+  const gtag: GtagFn = function gtag() {
+    // eslint-disable-next-line prefer-rest-params
+    window.dataLayer!.push(arguments)
+  }
   window.gtag = gtag
   gtag('js', new Date())
   gtag('config', GA_ID)
