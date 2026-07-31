@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import gsap from 'gsap'
 import { maskReveal } from '../lib/motion'
-import { loadRecaptcha, getRecaptchaToken } from '../lib/recaptcha'
+import { loadTurnstile, getTurnstileToken } from '../lib/turnstile'
 import { trackFormStart, trackFormStep, trackLead, trackFormError } from '../lib/analytics'
 import LogoFace from './LogoFace'
 
@@ -191,7 +191,7 @@ export default function ScrollWizard() {
   /* Зареждаме reCAPTCHA чак когато потребителят влезе във формата
      (не на page load), за да не тежи на началото и значката да не стои от старта. */
   useEffect(() => {
-    if (phase === 'wizard') loadRecaptcha().catch(() => { /* ще опитаме пак при submit */ })
+    if (phase === 'wizard') loadTurnstile().catch(() => { /* ще опитаме пак при submit */ })
   }, [phase])
 
   const setValue = (id: string, value: FormValue) => {
@@ -330,14 +330,14 @@ export default function ScrollWizard() {
     const timeout = window.setTimeout(() => controller.abort(), 15000)
     try {
       // reCAPTCHA не бива да блокира изпращането, ако заигне — даваме ѝ до 8s.
-      const recaptchaToken = await Promise.race([
-        getRecaptchaToken('submit'),
+      const captchaToken = await Promise.race([
+        getTurnstileToken(),
         new Promise<null>(r => window.setTimeout(() => r(null), 8000)),
       ])
       const res = await fetch('/api/send-email', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ...formData, recaptchaToken }),
+        body: JSON.stringify({ ...formData, captchaToken }),
         signal: controller.signal,
       })
       // Отговорът може да не е JSON (таймаут, CDN/прокси грешка) — не оставяме

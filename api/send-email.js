@@ -9,6 +9,52 @@ const DEFAULT_CLIENT_REPLY_TO = 'adsjustpablo@gmail.com'
 const MAX_FIELD_LENGTH = 500
 const MAX_LIST_ITEMS = 20
 
+/* ── Блокирани податели ──────────────────────────────────────
+   Адреси и домейни, които са пращали само боклук през формата.
+   Пази се в кода, за да има история кой кога е бил блокиран.
+   За спешно добавяне без коммит: env BLOCKED_EMAILS / BLOCKED_DOMAINS
+   (списъци, разделени със запетая).
+
+   Блокираното запитване получава 200 „успех", но НЕ се изпраща нищо —
+   нито до екипа, нито потвърждение. Ако върнем грешка, ботът разбира,
+   че е хванат, и опитва пак с друг адрес.
+   ──────────────────────────────────────────────────────────── */
+const BLOCKED_EMAILS = ['rudo@ruko.ru', 'asdasdasds@kuku.gs']
+const BLOCKED_DOMAINS = []
+
+function splitEnvList(value) {
+  return String(value || '')
+    .split(',')
+    .map((s) => s.trim().toLowerCase())
+    .filter(Boolean)
+}
+
+const blockedEmails = new Set([
+  ...BLOCKED_EMAILS.map((e) => e.toLowerCase()),
+  ...splitEnvList(process.env.BLOCKED_EMAILS),
+])
+const blockedDomains = new Set([
+  ...BLOCKED_DOMAINS.map((d) => d.toLowerCase()),
+  ...splitEnvList(process.env.BLOCKED_DOMAINS).map((d) => d.replace(/^@/, '')),
+])
+
+/* „ivan+cokolado@gmail.com" и „ivan@gmail.com" стигат до една кутия —
+   без това сваляне на суфикса блокирането се заобикаля с един знак. */
+function normalizeEmail(value) {
+  const email = String(value || '').trim().toLowerCase()
+  const at = email.lastIndexOf('@')
+  if (at < 1) return email
+  const local = email.slice(0, at).split('+')[0]
+  return `${local}@${email.slice(at + 1)}`
+}
+
+function isBlocked(email) {
+  const normalized = normalizeEmail(email)
+  if (blockedEmails.has(normalized)) return true
+  const domain = normalized.slice(normalized.lastIndexOf('@') + 1)
+  return Boolean(domain) && blockedDomains.has(domain)
+}
+
 /* Best-effort rate limiting на ниво „топъл" инстанс. Serverless инстансите са
    много и се рециклират, така че това НЕ е желязна защита — но спира най-грубия
    flood от един IP. За твърда защита: Vercel KV / Upstash. */
@@ -57,37 +103,68 @@ function sanitizeBody(body) {
   return out
 }
 
-/* Google reCAPTCHA v3 — оценяваме, но НЕ блокираме. Целта е да не губим
-   реални клиенти: винаги приемаме заявката, а само маркираме съмнителните
-   (провалена проверка / нисък score) с бележка в имейла.
-   Липсващ token (напр. блокер), липсващ secret или мрежов проблем НЕ се
-   третират като спам — за да не наказваме легитимни хора. */
-async function assessRecaptcha(token) {
-  const secret = process.env.RECAPTCHA_SECRET_KEY
-  const minScore = Number(process.env.RECAPTCHA_MIN_SCORE || '0.5')
+/* ── Cloudflare Turnstile ────────────────────────────────────
+   Замести reCAPTCHA v3. Turnstile е pass/fail — няма score, което
+   маха цялата настройка на прагове: или токенът е валиден, или не е.
 
-  if (!secret || !token) return { suspicious: false, note: null }
+   Три изхода, защото „бот" и „човек с блокер" не са едно и също:
 
+     block — токен, който Cloudflare отхвърля (подправен, изтекъл,
+             вече използван) или дошъл от чужд домейн.
+     flag  — липсващ токен. Причината може да е блокер у реален
+             клиент, затова минава с бележка. С TURNSTILE_REQUIRE_TOKEN=true
+             става блок.
+     allow — чист токен, или наша конфигурационна грешка / паднал
+             Cloudflare — никога не наказваме клиента за това.
+
+   Блокираните получават ЯСНА грешка, не тихо „успех": формата показва
+   резервния канал, така че сгрешено блокиран човек има как да се свърже.
+   ──────────────────────────────────────────────────────────── */
+const TURNSTILE_VERIFY_URL = 'https://challenges.cloudflare.com/turnstile/v0/siteverify'
+const TURNSTILE_ALLOWED_HOSTS = ['just-pablo.com', 'www.just-pablo.com']
+
+async function assessCaptcha(token, remoteip) {
+  const secret = process.env.TURNSTILE_SECRET_KEY
+  const requireToken = process.env.TURNSTILE_REQUIRE_TOKEN === 'true'
+
+  if (!secret) {
+    // Шумно, защото отвън е неразличимо от работеща защита.
+    console.error('[send-email] TURNSTILE_SECRET_KEY липсва — формата е БЕЗ защита от ботове.')
+    return { verdict: 'allow', note: null }
+  }
+
+  if (!token) {
+    return requireToken
+      ? { verdict: 'block', note: 'липсващ Turnstile токен' }
+      : { verdict: 'flag', note: 'без Turnstile токен (блокер или бот)' }
+  }
+
+  let data
   try {
-    const params = new URLSearchParams({ secret, response: String(token) })
-    const resp = await fetch('https://www.google.com/recaptcha/api/siteverify', {
+    const body = new URLSearchParams({ secret, response: String(token) })
+    if (remoteip && remoteip !== 'unknown') body.set('remoteip', remoteip)
+    const resp = await fetch(TURNSTILE_VERIFY_URL, {
       method: 'POST',
       headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-      body: params,
+      body,
     })
-    const data = await resp.json()
-    if (!data.success) {
-      const codes = (data['error-codes'] || []).join(', ') || 'unknown'
-      return { suspicious: true, note: `reCAPTCHA не премина (${codes})` }
-    }
-    if (typeof data.score === 'number' && data.score < minScore) {
-      return { suspicious: true, note: `нисък reCAPTCHA score (${data.score})` }
-    }
-    return { suspicious: false, note: null, score: data.score }
+    data = await resp.json()
   } catch (err) {
-    console.error('reCAPTCHA verify error:', err)
-    return { suspicious: false, note: null }
+    console.error('[send-email] Turnstile verify недостъпна:', err)
+    return { verdict: 'allow', note: 'Turnstile не можа да бъде проверена' }
   }
+
+  if (!data?.success) {
+    const codes = (data?.['error-codes'] || []).join(', ') || 'unknown'
+    return { verdict: 'block', note: `Turnstile не премина (${codes})` }
+  }
+
+  /* Токен, минтван на друг домейн = преизползван от чужд сайт. */
+  if (data.hostname && !TURNSTILE_ALLOWED_HOSTS.includes(data.hostname)) {
+    return { verdict: 'block', note: `Turnstile hostname не съвпада (${data.hostname})` }
+  }
+
+  return { verdict: 'allow', note: null }
 }
 
 export default async function handler(req, res) {
@@ -118,9 +195,22 @@ export default async function handler(req, res) {
       return res.status(400).json({ success: false, error: 'Моля, въведете валиден имейл адрес.' })
     }
 
-    // reCAPTCHA само маркира съмнителните — никога не блокира (за да не губим клиенти).
-    const rc = await assessRecaptcha(raw.recaptchaToken)
-    if (rc.suspicious) console.warn('reCAPTCHA маркира заявка като съмнителна:', rc.note)
+    /* Тихо отбиване: отвън изглежда като успешно изпращане, но нищо не тръгва.
+       Логва се, за да се вижда обемът във Vercel логовете. */
+    if (isBlocked(email)) {
+      console.warn('[send-email] блокиран подател, запитването е отхвърлено:', normalizeEmail(email))
+      return res.status(200).json({ success: true })
+    }
+
+    const rc = await assessCaptcha(raw.captchaToken, clientIp(req))
+    if (rc.verdict === 'block') {
+      console.warn('[send-email] Turnstile отхвърли заявка:', rc.note, '|', normalizeEmail(email))
+      return res.status(403).json({
+        success: false,
+        error: 'Проверката за сигурност не премина. Моля, опитайте отново или ни пишете директно на adsjustpablo@gmail.com.',
+      })
+    }
+    if (rc.verdict === 'flag') console.warn('[send-email] съмнителна заявка:', rc.note)
 
     const teamEmail = buildInquiryEmail(body, { spamNote: rc.note })
 

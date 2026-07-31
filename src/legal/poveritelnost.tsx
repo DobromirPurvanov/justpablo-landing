@@ -22,6 +22,12 @@ createRoot(document.getElementById('root')!).render(
     <p>
       Данните се съхраняват за срок, необходим за целите на комуникацията, и се обработват със съответните технически и организационни мерки за сигурност.
     </p>
+    <h2 className="text-xl font-semibold text-[#1A1A1A] mt-6 mb-2">Защита от злоупотреба</h2>
+    {/* Тази секция е УСЛОВИЕ за невидимия режим на Turnstile — не я махайте. */}
+    <p>
+      Формата за запитвания е защитена с Cloudflare Turnstile, който различава хората от автоматизираните ботове. Проверката е невидима и не изисква действие от вас. За целта Cloudflare обработва ограничена техническа информация за браузъра и заявката. Turnstile не използва данните за реклама и не проследява посетителите между сайтове — подробностите са в{' '}
+      <a href="https://www.cloudflare.com/application-services/terms/turnstile-privacy-addendum/" target="_blank" rel="noopener noreferrer" className="text-[#DC2626] hover:underline">Turnstile Privacy Addendum</a> на Cloudflare.
+    </p>
     <h2 className="text-xl font-semibold text-[#1A1A1A] mt-6 mb-2">Вашите права</h2>
     <p>
       Имате право на достъп, корекция или изтриване на личните си данни, както и право да възразите срещу тяхната обработка. За това можете да се свържете с нас на{' '}
