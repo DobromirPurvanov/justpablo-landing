@@ -1,5 +1,6 @@
 import LogoFace from '../components/LogoFace'
 import { cities } from '../lib/cities'
+import { OPEN_CONSENT_EVENT } from '../lib/consent'
 
 export default function LandingFooter() {
   return (
@@ -74,6 +75,14 @@ export default function LandingFooter() {
             <span className="flex items-center gap-5">
               <a href="./biskvitki" className="hover:text-white transition-colors inline-block py-3 -my-1.5">Политика за бисквитки</a>
               <a href="./poveritelnost" className="hover:text-white transition-colors inline-block py-3 -my-1.5">Защита на личните данни</a>
+              {/* Изборът за бисквитки трябва да е оттегляем по всяко време (GDPR чл. 7(3)). */}
+              <button
+                type="button"
+                onClick={() => window.dispatchEvent(new Event(OPEN_CONSENT_EVENT))}
+                className="hover:text-white transition-colors inline-block py-3 -my-1.5 underline underline-offset-2 decoration-white/25"
+              >
+                Настройки за бисквитки
+              </button>
             </span>
           </div>
         </div>

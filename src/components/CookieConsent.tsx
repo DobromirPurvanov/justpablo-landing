@@ -1,10 +1,14 @@
 import { useEffect, useState } from 'react'
-import { consentValue, saveConsent, loadTrackers, initConsent } from '../lib/consent'
+import { consentValue, saveConsent, applyConsent, initConsent, OPEN_CONSENT_EVENT } from '../lib/consent'
 
 /* ────────────────────────────────────────────────────────────
    Cookie consent банер — показва се веднъж, изборът се пази в
-   localStorage. „Приемам" зарежда GA/Meta Pixel; „Само необходимите"
-   не зарежда нищо. Реалното гейтване е в src/lib/consent.ts.
+   localStorage. „Приемам" вдига Google Consent Mode до granted и
+   зарежда Meta Pixel; „Само необходимите" оставя всичко на denied.
+   Реалното гейтване е в src/lib/consent.ts.
+
+   Изборът не е окончателен: линкът „Бисквитки" във футъра праща
+   OPEN_CONSENT_EVENT и банерът се показва пак.
    ──────────────────────────────────────────────────────────── */
 
 export default function CookieConsent() {
@@ -12,12 +16,21 @@ export default function CookieConsent() {
     try { return consentValue() === null } catch { return false }
   })
 
-  // Ако вече има съгласие „all" — пускаме трекерите при зареждане на страницата.
+  // GA4 тръгва още тук (в denied режим), Pixel — само при запазено „Приемам".
   useEffect(() => { initConsent() }, [])
+
+  // Повторно отваряне от футъра, за да може изборът да се промени.
+  const [current, setCurrent] = useState<'all' | 'necessary' | null>(null)
+  useEffect(() => {
+    const open = () => { setCurrent(consentValue()); setShow(true) }
+    window.addEventListener(OPEN_CONSENT_EVENT, open)
+    return () => window.removeEventListener(OPEN_CONSENT_EVENT, open)
+  }, [])
 
   const decide = (value: 'all' | 'necessary') => {
     saveConsent(value)
-    if (value === 'all') loadTrackers()
+    applyConsent(value)
+    setCurrent(value)
     setShow(false)
   }
 
@@ -42,6 +55,11 @@ export default function CookieConsent() {
         <p className="text-sm font-light text-[#1A1A1A]/80 leading-relaxed">
           Използваме бисквитки, за да работи сайтът коректно и да го подобряваме. Вижте{' '}
           <a href="./biskvitki.html" className="text-[#DC2626] underline underline-offset-2 hover:no-underline">политиката за бисквитки</a>.
+          {current && (
+            <span className="block mt-1.5 text-xs text-[#1A1A1A]/50">
+              Текущ избор: {current === 'all' ? 'всички бисквитки' : 'само необходимите'}.
+            </span>
+          )}
         </p>
       </div>
       <div className="flex items-center gap-2.5">

@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react'
 import CookieConsent from '../components/CookieConsent'
+import { OPEN_CONSENT_EVENT } from '../lib/consent'
 
 export default function LegalLayout({ title, children }: { title: string; children: ReactNode }) {
   return (
@@ -22,6 +23,18 @@ export default function LegalLayout({ title, children }: { title: string; childr
           </div>
         </div>
       </main>
+      <footer className="section-padding py-8 border-t border-[#1A1A1A]/[0.06]">
+        <div className="container-max max-w-3xl text-xs font-light text-[#1A1A1A]/55">
+          {/* Изборът за бисквитки трябва да е оттегляем по всяко време (GDPR чл. 7(3)). */}
+          <button
+            type="button"
+            onClick={() => window.dispatchEvent(new Event(OPEN_CONSENT_EVENT))}
+            className="hover:text-[#1A1A1A] transition-colors underline underline-offset-2 decoration-[#1A1A1A]/25 py-2"
+          >
+            Настройки за бисквитки
+          </button>
+        </div>
+      </footer>
     </div>
   )
 }
