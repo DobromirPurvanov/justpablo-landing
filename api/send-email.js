@@ -205,10 +205,15 @@ export default async function handler(req, res) {
     }
 
     /* Тихо отбиване: отвън изглежда като успешно изпращане, но нищо не тръгва.
-       Логва се, за да се вижда обемът във Vercel логовете. */
+       Логва се, за да се вижда обемът във Vercel логовете.
+
+       `delivered: false` е за нас, не за подателя: без него клиентът вижда
+       success и праща generate_lead в GA4, тоест блокираният спам щеше да
+       се брои като конверсия. Ботът няма причина да гледа това поле — за
+       него отговорът си остава „успех". */
     if (isBlocked(email)) {
       console.warn('[send-email] блокиран подател, запитването е отхвърлено:', normalizeEmail(email))
-      return res.status(200).json({ success: true })
+      return res.status(200).json({ success: true, delivered: false })
     }
 
     const rc = await assessCaptcha(raw.captchaToken, clientIp(req))

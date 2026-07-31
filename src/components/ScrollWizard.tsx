@@ -347,7 +347,10 @@ export default function ScrollWizard() {
         throw new Error(data?.error || 'Грешка при изпращане на запитването.')
       }
       clearSaved()
-      trackLead()
+      /* Сървърът отговаря със `success` и на тихо блокиран подател, за да не
+         разбере ботът, че е спрян. `delivered: false` е сигналът, че писмо
+         НЕ е тръгнало — иначе спамът се брои като конверсия в GA4. */
+      if (data.delivered !== false) trackLead()
       setIsSuccess(true)
     } catch (err) {
       // Технически съобщения (Failed to fetch, JSON parse…) не са за потребителя —
