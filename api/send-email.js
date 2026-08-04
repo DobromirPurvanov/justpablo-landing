@@ -1,5 +1,18 @@
 import { Resend } from 'resend'
 import { buildInquiryEmail, buildClientConfirmation } from './email-template.js'
+import { hasDb } from './_lib/db.js'
+import { insertLead } from './_lib/leads.js'
+
+/* Запитванията се пишат и в CRM базата (таблица leads). Best-effort:
+   грешка в базата НИКОГА не бива да чупи формата — само се логва. */
+async function saveLead(body, meta) {
+  if (!hasDb()) return
+  try {
+    await insertLead(body, meta)
+  } catch (err) {
+    console.error('[send-email] записът в CRM се провали:', err)
+  }
+}
 
 /* Адрес, на който клиентът може да отговори на потвърждението. Домейнът
    just-pablo.com няма MX записи, така че from-адресът НЕ приема поща —
@@ -213,6 +226,8 @@ export default async function handler(req, res) {
        него отговорът си остава „успех". */
     if (isBlocked(email)) {
       console.warn('[send-email] блокиран подател, запитването е отхвърлено:', normalizeEmail(email))
+      // Спамът също се пази — с отделен статус, за да се вижда обемът.
+      await saveLead(body, { status: 'spam', ip: clientIp(req) })
       return res.status(200).json({ success: true, delivered: false })
     }
 
@@ -225,6 +240,9 @@ export default async function handler(req, res) {
       })
     }
     if (rc.verdict === 'flag') console.warn('[send-email] съмнителна заявка:', rc.note)
+
+    // В базата — преди изпращането, за да не зависи от успеха на Resend.
+    await saveLead(body, { status: 'new', spamNote: rc.note, ip: clientIp(req) })
 
     const teamEmail = buildInquiryEmail(body, { spamNote: rc.note })
 

@@ -45,6 +45,8 @@ GA4 и Meta Pixel **не** се зареждат на page load. Инжекти�
 
 Шаблоните са в `api/email-template.js` (`buildInquiryEmail`, `buildClientConfirmation`).
 
+Запитванията се записват и в Postgres базата на CRM-а (justpablo.work), когато `POSTGRES_URL` е наличен — best-effort, проблем с базата не чупи формата. Блокираният от блоклистата спам също се пази там, но със статус „Спам". Самият CRM е отделен проект и не живее в това репо.
+
 ### Променливи на средата
 
 Копирайте `.env.example` и попълнете. В Vercel се задават през Project → Settings → Environment Variables.
@@ -64,3 +66,4 @@ reCAPTCHA **никога не блокира** — само добавя пре�
 ### DNS (незавършено)
 
 `just-pablo.com` няма **MX** записи, така че `zapitvane@just-pablo.com` не приема поща — затова Reply-To сочи към Gmail кутия. Липсва и **DMARC** запис, което вреди на доставяемостта в Gmail.
+
