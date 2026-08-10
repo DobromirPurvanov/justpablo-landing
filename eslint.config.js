@@ -20,4 +20,14 @@ export default defineConfig([
       globals: globals.browser,
     },
   },
+  {
+    // shadcn примитивите изнасят и cva вариантите си (`buttonVariants`,
+    // `badgeVariants`) до самия компонент — така ги генерира CLI-ят и така
+    // трябва да останат, за да може `npx shadcn add` да ги обновява. Цената
+    // е само по-мързелив Fast Refresh за тези файлове.
+    files: ['src/components/ui/**/*.{ts,tsx}'],
+    rules: {
+      'react-refresh/only-export-components': 'off',
+    },
+  },
 ])
