@@ -2,7 +2,6 @@ import { useEffect, useRef } from 'react'
 import gsap from 'gsap'
 import { ArrowDown, Check, Crown, Shield, Sparkles, Zap } from 'lucide-react'
 import { maskReveal, reveal } from '../lib/motion'
-import { bgn } from '../lib/currency'
 import { scrollToId } from '../lib/scroll'
 import { SinglePricingCard } from '../components/ui/single-pricing-card'
 
@@ -67,7 +66,6 @@ export default function PriceSpotlight() {
               original: '970 €',
               discount: 'Промоция −50%',
               discountBadgeClassName: 'border-primary/30 text-primary bg-primary/5',
-              note: bgn(485),
             }}
             benefits={benefits}
             features={features}
