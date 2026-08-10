@@ -179,6 +179,18 @@ function fillTimeNote(raw) {
   return ms < MIN_FILL_MS ? `формата е попълнена за ${(ms / 1000).toFixed(1)}s` : null
 }
 
+/* Honeypot: скрито поле „fax" в контактната стъпка, което човек не вижда.
+   Стойност в него = автопопълване — но НЕ само от ботове: LastPass/RoboForm
+   профилите и Safari Contact AutoFill имат поле Fax и могат да го попълнят
+   на РЕАЛЕН клиент (прегледът от 10.08.2026 го потвърди). Затова honeypot-ът
+   е БЕЛЕЖКА, не тихо изхвърляне: запитване на човек с password manager не
+   бива да изчезва зад екран „Благодарим!". Ботът с валиден токен + honeypot
+   пристига видимо маркиран, човекът преценява.
+   != null + String(): typeof-проверка се заобикаля с fax: 123 / ["x"]. */
+function honeypotNote(raw) {
+  return raw.fax != null && String(raw.fax).trim() ? 'honeypot (fax) попълнен' : null
+}
+
 /* ── Cloudflare Turnstile ────────────────────────────────────
    Замести reCAPTCHA v3. Turnstile е pass/fail — няма score, което
    маха цялата настройка на прагове: или токенът е валиден, или не е.
@@ -210,9 +222,11 @@ async function assessCaptcha(token, remoteip) {
   const requireToken = process.env.TURNSTILE_REQUIRE_TOKEN !== 'false'
 
   if (!secret) {
-    // Шумно, защото отвън е неразличимо от работеща защита.
+    /* Fail-open, но ВИДИМ: без secret не наказваме клиента (формата работи),
+       ала всяко писмо пристига с крещяща бележка и без потвърждение към
+       подателя — иначе изгубеният env връща тихо целия спам канал. */
     console.error('[send-email] TURNSTILE_SECRET_KEY липсва — формата е БЕЗ защита от ботове.')
-    return { verdict: 'allow', note: null }
+    return { verdict: 'flag', note: 'TURNSTILE_SECRET_KEY липсва — captcha-та НЕ е проверена' }
   }
 
   if (!token) {
@@ -223,7 +237,9 @@ async function assessCaptcha(token, remoteip) {
 
   let data
   try {
-    const body = new URLSearchParams({ secret, response: String(token) })
+    // Clamp: Turnstile токените са до ~2 KB; мегабайтов „токен" не бива да
+    // пътува до Cloudflare на всяка заявка.
+    const body = new URLSearchParams({ secret, response: String(token).slice(0, 2048) })
     if (remoteip && remoteip !== 'unknown') body.set('remoteip', remoteip)
     const resp = await fetch(TURNSTILE_VERIFY_URL, {
       method: 'POST',
@@ -277,17 +293,6 @@ export default async function handler(req, res) {
       return res.status(400).json({ success: false, error: 'Моля, въведете валиден имейл адрес.' })
     }
 
-    /* Honeypot: скрито поле „fax" в контактната стъпка, което човек не
-       вижда и не попълва. Стойност в него = бот с автопопълване — при това
-       бот в истински браузър, тоест такъв, който МОЖЕ да носи валиден
-       Turnstile токен. Затова се проверява независимо от captcha-та.
-       Тихо „успех", по същата логика като блокираните податели. */
-    if (typeof raw.fax === 'string' && raw.fax.trim()) {
-      console.warn('[send-email] honeypot попълнен, запитването е отхвърлено:', normalizeEmail(email))
-      await saveLead(body, { status: 'spam', spamNote: 'honeypot (fax) попълнен', ip: clientIp(req) })
-      return res.status(200).json({ success: true, delivered: false })
-    }
-
     /* Тихо отбиване: отвън изглежда като успешно изпращане, но нищо не тръгва.
        Логва се, за да се вижда обемът във Vercel логовете.
 
@@ -316,7 +321,7 @@ export default async function handler(req, res) {
 
     /* Меките сигнали не блокират поотделно — събират се в обща бележка,
        която отива в имейла и в CRM записа, за преглед от човек. */
-    const spamNote = [rc.note, structureNote(body), fillTimeNote(raw)].filter(Boolean).join('; ') || null
+    const spamNote = [rc.note, honeypotNote(raw), structureNote(body), fillTimeNote(raw)].filter(Boolean).join('; ') || null
     if (spamNote) console.warn('[send-email] бележки по заявката:', spamNote, '|', normalizeEmail(email))
 
     // В базата — преди изпращането, за да не зависи от успеха на Resend.

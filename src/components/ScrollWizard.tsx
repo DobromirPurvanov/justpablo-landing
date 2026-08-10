@@ -139,7 +139,7 @@ type FormValue = string | string[] | boolean
 type WizardData = Record<string, FormValue>
 /** Само текстовите стъпки държат string — за &lt;input value&gt;. */
 const asText = (v: FormValue | undefined) => (typeof v === 'string' ? v : '')
-type Saved = { formData: WizardData; current: number; phase: 'intro' | 'wizard' }
+type Saved = { formData: WizardData; current: number; phase: 'intro' | 'wizard'; startedAt?: number }
 
 export default function ScrollWizard() {
   const [phase, setPhase] = useState<'intro' | 'wizard'>('intro')
@@ -188,7 +188,9 @@ export default function ScrollWizard() {
     if (isSuccess) return
     try {
       if (Object.keys(formData).length > 0 || phase === 'wizard') {
-        localStorage.setItem(STORAGE_KEY, JSON.stringify({ v: 1, formData, current, phase }))
+        // startedAt влиза в черновата: иначе „Продължи" + бърз submit праща
+        // formElapsedMs от секунди и лепи фалшива спам-бележка на реален клиент.
+        localStorage.setItem(STORAGE_KEY, JSON.stringify({ v: 1, formData, current, phase, startedAt: startedAtRef.current }))
       }
     } catch { /* няма localStorage — формата работи и без него */ }
   }, [formData, current, phase, isSuccess])
@@ -799,7 +801,7 @@ export default function ScrollWizard() {
         {resume && (
           <div className="fixed top-24 left-1/2 -translate-x-1/2 z-[80] bg-[#1A1A1A] text-white pl-5 pr-3 py-3 rounded-lg shadow-xl flex items-center gap-4 text-sm max-w-[calc(100vw-32px)]" role="status">
             <span className="font-light">Имате запазен прогрес до стъпка {Math.min((resume.current ?? 0) + 1, questions.length)}.</span>
-            <button type="button" onClick={() => { setFormData(resume.formData || {}); setCurrent(Math.min(resume.current ?? 0, questions.length - 1)); setPhase(resume.phase === 'wizard' ? 'wizard' : 'intro'); setResume(null) }} className="shrink-0 bg-[#DC2626] hover:bg-[#B91C1C] px-3.5 py-1.5 rounded-md font-medium transition-colors">Продължи</button>
+            <button type="button" onClick={() => { setFormData(resume.formData || {}); setCurrent(Math.min(resume.current ?? 0, questions.length - 1)); startedAtRef.current = typeof resume.startedAt === 'number' ? resume.startedAt : Date.now(); setPhase(resume.phase === 'wizard' ? 'wizard' : 'intro'); setResume(null) }} className="shrink-0 bg-[#DC2626] hover:bg-[#B91C1C] px-3.5 py-1.5 rounded-md font-medium transition-colors">Продължи</button>
             <button type="button" onClick={() => { clearSaved(); setResume(null) }} className="shrink-0 text-white/60 hover:text-white px-1 py-1.5 transition-colors">Отначало</button>
           </div>
         )}

@@ -39,10 +39,20 @@ export function loadTurnstile(): Promise<void> {
   if (loadPromise) return loadPromise
 
   loadPromise = new Promise<void>((resolve, reject) => {
+    /* При провал: маха се и скриптът, и кешираният promise — иначе едно
+       временно недостъпно challenges.cloudflare.com (мрежов blip, блокер,
+       изключен впоследствие) отравя ВСЕКИ следващ опит до пълен reload:
+       loadTurnstile() би връщал завинаги същото rejected promise, а
+       „вторият опит" при submit би бил фиктивен. */
+    const fail = (script: HTMLScriptElement) => {
+      script.remove()
+      loadPromise = null
+      reject(new Error('Turnstile failed to load'))
+    }
     const existing = document.querySelector<HTMLScriptElement>('script[data-turnstile]')
     if (existing) {
       existing.addEventListener('load', () => resolve())
-      existing.addEventListener('error', () => reject(new Error('Turnstile failed to load')))
+      existing.addEventListener('error', () => fail(existing))
       return
     }
     const s = document.createElement('script')
@@ -51,7 +61,7 @@ export function loadTurnstile(): Promise<void> {
     s.defer = true
     s.dataset.turnstile = 'true'
     s.onload = () => resolve()
-    s.onerror = () => reject(new Error('Turnstile failed to load'))
+    s.onerror = () => fail(s)
     document.head.appendChild(s)
   })
   return loadPromise
