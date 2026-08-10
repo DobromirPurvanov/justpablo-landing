@@ -15,8 +15,13 @@
 const SITE_KEY = '0x4AAAAAAECsYDTi8Gj3l1lQ'
 const SCRIPT_SRC = 'https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit'
 
+/* Етикет на действието, връщан от siteverify — бекендът проверява, че
+   токенът е минтван именно за изпращане на формата (виж send-email.js). */
+export const TURNSTILE_ACTION = 'submit_inquiry'
+
 type TurnstileOptions = {
   sitekey: string
+  action?: string
   callback: (token: string) => void
   'error-callback': () => void
   'timeout-callback': () => void
@@ -106,6 +111,7 @@ export async function getTurnstileToken(): Promise<string | null> {
 
       const widgetId = turnstile.render(host, {
         sitekey: SITE_KEY,
+        action: TURNSTILE_ACTION,
         callback: (token) => finish(token),
         'error-callback': () => finish(null),
         'timeout-callback': () => finish(null),

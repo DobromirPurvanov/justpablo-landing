@@ -262,6 +262,14 @@ async function assessCaptcha(token, remoteip) {
     return { verdict: 'block', note: `Turnstile hostname не съвпада (${data.hostname})` }
   }
 
+  /* siteverify връща action-а, зададен при render (src/lib/turnstile.ts).
+     Токен с ДРУГ action е минтван за друг контекст → block. Празен action
+     се допуска: стар кеширан бъндъл отпреди добавянето му минтва без action,
+     а edge кешът е доказано сервирал HTML с часове (виж infra бележката). */
+  if (data.action && data.action !== 'submit_inquiry') {
+    return { verdict: 'block', note: `Turnstile action не съвпада (${data.action})` }
+  }
+
   return { verdict: 'allow', note: null }
 }
 
