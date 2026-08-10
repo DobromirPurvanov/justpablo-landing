@@ -32,7 +32,14 @@ const MAX_LIST_ITEMS = 20
    нито до екипа, нито потвърждение. Ако върнем грешка, ботът разбира,
    че е хванат, и опитва пак с друг адрес.
    ──────────────────────────────────────────────────────────── */
-const BLOCKED_EMAILS = ['rudo@ruko.ru', 'asdasdasds@kuku.gs']
+const BLOCKED_EMAILS = [
+  'rudo@ruko.ru',
+  'asdasdasds@kuku.gs',
+  // Вълната от 10.08.2026 (виждат се в Resend: bounce-нали потвърждения):
+  'vaq@gmail.com',
+  'mini@mail.ru',
+  'face@mail.ru',
+]
 const BLOCKED_DOMAINS = []
 
 function splitEnvList(value) {
@@ -125,29 +132,82 @@ function sanitizeBody(body) {
   return out
 }
 
+/* ── Структурна проверка ─────────────────────────────────────
+   Реалната форма е wizard с фиксирани опции: brandType, period и budget
+   са задължителни стъпки и стойностите им идват само от бутоните в
+   ScrollWizard.tsx. Генеричният форм-спам (name/email/message) няма как
+   да ги уцели. Несъответствието е БЕЛЕЖКА към екипа, не блок: списъците
+   тук са копие на клиентските и при разминаване след редизайн (напр.
+   стар запазен прогрес с етикети отпреди смяна на цените) реален клиент
+   не бива да пострада. Ботовете без токен така или иначе спират по-рано.
+
+   При промяна на опциите в ScrollWizard.tsx — обнови и тук. Дрейфът е
+   безопасен (само шум в бележките), затова не е изнесено в общ модул. */
+const FORM_OPTIONS = {
+  brandType: ['Съществуващ бранд', 'Стартиращ бранд', 'Личен проект / Инфлуенсър'],
+  period: ['3 месеца', '6 месеца', '1 година', '2+ години'],
+  budget: ['До 500 €', '500 – 1500 €', '1500 – 2500 €', '2500 – 5000 €', 'Над 5000 €'],
+  focus: ['Услуга/и', 'Продукт/и собствено производство', 'Търговия или дистрибуция', 'Друго'],
+  goals: ['Разпознаваемост', 'Продажби', 'Абонаменти', 'Подготовка за експанзия', 'Друго'],
+  needs: ['Нов уебсайт', 'SEO и GEO (видимост в AI)', 'Онлайн реклама', 'Брандинг и дизайн', 'Социални мрежи и видео'],
+}
+
+function structureNote(body) {
+  const issues = []
+  for (const key of ['brandType', 'period', 'budget']) {
+    if (!body[key]) issues.push(`липсва ${key}`)
+    else if (!FORM_OPTIONS[key].includes(body[key])) issues.push(`${key} извън опциите`)
+  }
+  for (const key of ['focus', 'goals', 'needs']) {
+    const list = body[key]
+    if (Array.isArray(list) && list.some((v) => !FORM_OPTIONS[key].includes(v))) {
+      issues.push(`${key} извън опциите`)
+    }
+  }
+  // Линк в името е класика при спам; полето site легитимно съдържа URL.
+  if (/https?:\/\//i.test(String(body.name || ''))) issues.push('URL в името')
+  return issues.length ? `подозрителна структура: ${issues.join(', ')}` : null
+}
+
+/* Под колко милисекунди попълване е физически неправдоподобно за човек.
+   Стойността идва от клиента и е фалшифицируема — затова е бележка. */
+const MIN_FILL_MS = 5000
+
+function fillTimeNote(raw) {
+  const ms = Number(raw.formElapsedMs)
+  if (!Number.isFinite(ms) || ms < 0) return null
+  return ms < MIN_FILL_MS ? `формата е попълнена за ${(ms / 1000).toFixed(1)}s` : null
+}
+
 /* ── Cloudflare Turnstile ────────────────────────────────────
    Замести reCAPTCHA v3. Turnstile е pass/fail — няма score, което
    маха цялата настройка на прагове: или токенът е валиден, или не е.
 
    Три изхода, защото „бот" и „човек с блокер" не са едно и също:
 
-     block — токен, който Cloudflare отхвърля (подправен, изтекъл,
-             вече използван) или дошъл от чужд домейн.
-     flag  — липсващ токен. Причината може да е блокер у реален
-             клиент, затова минава с бележка. С TURNSTILE_REQUIRE_TOKEN=true
-             става блок.
+     block — липсващ токен, или токен, който Cloudflare отхвърля
+             (подправен, изтекъл, вече използван), или дошъл от чужд домейн.
+     flag  — липсващ токен при TURNSTILE_REQUIRE_TOKEN=false — минава
+             с бележка. Това беше подразбирането до 10.08.2026, когато
+             целият спам се оказа точно тук: ботове, POST-ващи директно
+             към API-то без изобщо да зареждат Turnstile. Затова сега
+             липсващият токен по подразбиране е block, а env-ът е
+             аварийният изход, ако защитата почне да реже реални клиенти.
      allow — чист токен, или наша конфигурационна грешка / паднал
              Cloudflare — никога не наказваме клиента за това.
 
    Блокираните получават ЯСНА грешка, не тихо „успех": формата показва
    резервния канал, така че сгрешено блокиран човек има как да се свърже.
+   Пазят се и в CRM базата (статус „спам"), за да се вижда колко и кого
+   режем — единственият начин да се хване прекалено строга защита.
    ──────────────────────────────────────────────────────────── */
 const TURNSTILE_VERIFY_URL = 'https://challenges.cloudflare.com/turnstile/v0/siteverify'
 const TURNSTILE_ALLOWED_HOSTS = ['just-pablo.com', 'www.just-pablo.com']
 
 async function assessCaptcha(token, remoteip) {
   const secret = process.env.TURNSTILE_SECRET_KEY
-  const requireToken = process.env.TURNSTILE_REQUIRE_TOKEN === 'true'
+  // Строг режим по подразбиране; TURNSTILE_REQUIRE_TOKEN=false го отпуска.
+  const requireToken = process.env.TURNSTILE_REQUIRE_TOKEN !== 'false'
 
   if (!secret) {
     // Шумно, защото отвън е неразличимо от работеща защита.
@@ -217,6 +277,17 @@ export default async function handler(req, res) {
       return res.status(400).json({ success: false, error: 'Моля, въведете валиден имейл адрес.' })
     }
 
+    /* Honeypot: скрито поле „fax" в контактната стъпка, което човек не
+       вижда и не попълва. Стойност в него = бот с автопопълване — при това
+       бот в истински браузър, тоест такъв, който МОЖЕ да носи валиден
+       Turnstile токен. Затова се проверява независимо от captcha-та.
+       Тихо „успех", по същата логика като блокираните податели. */
+    if (typeof raw.fax === 'string' && raw.fax.trim()) {
+      console.warn('[send-email] honeypot попълнен, запитването е отхвърлено:', normalizeEmail(email))
+      await saveLead(body, { status: 'spam', spamNote: 'honeypot (fax) попълнен', ip: clientIp(req) })
+      return res.status(200).json({ success: true, delivered: false })
+    }
+
     /* Тихо отбиване: отвън изглежда като успешно изпращане, но нищо не тръгва.
        Логва се, за да се вижда обемът във Vercel логовете.
 
@@ -234,17 +305,24 @@ export default async function handler(req, res) {
     const rc = await assessCaptcha(raw.captchaToken, clientIp(req))
     if (rc.verdict === 'block') {
       console.warn('[send-email] Turnstile отхвърли заявка:', rc.note, '|', normalizeEmail(email))
+      // В базата със статус „спам" — за видимост дали не режем реални хора.
+      await saveLead(body, { status: 'spam', spamNote: rc.note, ip: clientIp(req) })
       return res.status(403).json({
         success: false,
-        error: 'Проверката за сигурност не премина. Моля, опитайте отново или ни пишете директно на adsjustpablo@gmail.com.',
+        error: 'Проверката за сигурност не премина. Ако ползвате блокер на реклами, изключете го и опитайте отново — или ни пишете директно на adsjustpablo@gmail.com.',
       })
     }
     if (rc.verdict === 'flag') console.warn('[send-email] съмнителна заявка:', rc.note)
 
-    // В базата — преди изпращането, за да не зависи от успеха на Resend.
-    await saveLead(body, { status: 'new', spamNote: rc.note, ip: clientIp(req) })
+    /* Меките сигнали не блокират поотделно — събират се в обща бележка,
+       която отива в имейла и в CRM записа, за преглед от човек. */
+    const spamNote = [rc.note, structureNote(body), fillTimeNote(raw)].filter(Boolean).join('; ') || null
+    if (spamNote) console.warn('[send-email] бележки по заявката:', spamNote, '|', normalizeEmail(email))
 
-    const teamEmail = buildInquiryEmail(body, { spamNote: rc.note })
+    // В базата — преди изпращането, за да не зависи от успеха на Resend.
+    await saveLead(body, { status: 'new', spamNote, ip: clientIp(req) })
+
+    const teamEmail = buildInquiryEmail(body, { spamNote })
 
     const recipients = [
       process.env.TO_EMAIL_PRIMARY,
@@ -278,8 +356,19 @@ export default async function handler(req, res) {
     }
 
     /* Потвърждението към клиента е второстепенно: ако то се провали, запитването
-       вече е стигнало до екипа и не бива да показваме грешка на клиента. */
+       вече е стигнало до екипа и не бива да показваме грешка на клиента.
+
+       При КАКВАТО И ДА Е бележка (без токен в отпуснат режим, счупена
+       структура, светкавично попълване) потвърждение НЕ се праща: ботовете
+       пишат фалшиви адреси, тези писма bounce-ват и потъват репутацията на
+       домейна (към 10.08.2026 — 31% bounce в Resend, изтровен от точно това).
+       Реалният клиент при съмнение просто не получава потвърждение —
+       запитването му при всички случаи е у екипа. */
     const clientReplyTo = process.env.CLIENT_REPLY_TO || DEFAULT_CLIENT_REPLY_TO
+    if (spamNote) {
+      console.warn('[send-email] потвърждението е пропуснато заради бележки:', normalizeEmail(email))
+      return res.status(200).json({ success: true })
+    }
     try {
       const confirmation = buildClientConfirmation(body, { replyTo: clientReplyTo })
       const { error } = await resend.emails.send({

@@ -170,6 +170,18 @@ export default function ScrollWizard() {
   const currentRef = useRef(current)
   useEffect(() => { currentRef.current = current }, [current])
 
+  /* ─── Анти-спам сигнали за бекенда ───
+     honeypot: скрито поле „fax" в контактната стъпка — човек не го вижда,
+     автопопълващ бот го пълни. Името е нарочно „fax": ботовете пълнят
+     всички полета, а autofill на Chrome няма факс в профила, така че
+     реален клиент не може да го попълни случайно. Държи се в state
+     (не ref), защото контактната стъпка се демонтира при „Преглед",
+     а answerArea се рендерира и в двата лейаута (desktop + mobile).
+     startedAt: кога е отворен wizard-ът — сървърът гледа накриво
+     „попълнена за 2 секунди" форма. */
+  const [honeypot, setHoneypot] = useState('')
+  const startedAtRef = useRef<number | null>(null)
+
   /* ─── Auto-save: запис при всяка промяна (предложението за продължаване
      се чете веднъж при init, виж resume по-горе) ─── */
   useEffect(() => {
@@ -191,7 +203,10 @@ export default function ScrollWizard() {
   /* Зареждаме reCAPTCHA чак когато потребителят влезе във формата
      (не на page load), за да не тежи на началото и значката да не стои от старта. */
   useEffect(() => {
-    if (phase === 'wizard') loadTurnstile().catch(() => { /* ще опитаме пак при submit */ })
+    if (phase !== 'wizard') return
+    loadTurnstile().catch(() => { /* ще опитаме пак при submit */ })
+    // Покрива и двата входа във wizard-а: startWizard и „Продължи" от чернова.
+    if (startedAtRef.current == null) startedAtRef.current = Date.now()
   }, [phase])
 
   const setValue = (id: string, value: FormValue) => {
@@ -327,17 +342,29 @@ export default function ScrollWizard() {
     setStepError('')
     setSubmitFailed(false)
     const controller = new AbortController()
-    const timeout = window.setTimeout(() => controller.abort(), 15000)
+    let timeout = 0
     try {
-      // reCAPTCHA не бива да блокира изпращането, ако заигне — даваме ѝ до 8s.
-      const captchaToken = await Promise.race([
+      /* Сървърът вече ОТХВЪРЛЯ заявки без Turnstile токен (оттам идваше
+         целият спам), така че токенът е важен: даваме до 8s + втори опит,
+         преди да пратим без него и да оставим сървъра да реши. Изпращането
+         не увисва завинаги — при отказ клиентът вижда ясна грешка с
+         резервния имейл канал. */
+      const waitToken = (ms: number) => Promise.race([
         getTurnstileToken(),
-        new Promise<null>(r => window.setTimeout(() => r(null), 8000)),
+        new Promise<null>(r => window.setTimeout(() => r(null), ms)),
       ])
+      const captchaToken = (await waitToken(8000)) ?? (await waitToken(4000))
+      // Таймерът тръгва чак СЛЕД captcha-та — иначе тя изяжда от 15-те секунди на fetch-а.
+      timeout = window.setTimeout(() => controller.abort(), 15000)
       const res = await fetch('/api/send-email', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ...formData, captchaToken }),
+        body: JSON.stringify({
+          ...formData,
+          captchaToken,
+          fax: honeypot,
+          formElapsedMs: startedAtRef.current == null ? undefined : Date.now() - startedAtRef.current,
+        }),
         signal: controller.signal,
       })
       // Отговорът може да не е JSON (таймаут, CDN/прокси грешка) — не оставяме
@@ -432,6 +459,7 @@ export default function ScrollWizard() {
     clearSaved()
     setFormData({}); setFieldErrors({}); setStepError('')
     setCurrent(0); setIsSuccess(false); setPhase('intro')
+    setHoneypot(''); startedAtRef.current = null
   }
 
   /* ─── Опция (radio/checkbox) — кутийка по спека, 48px touch target ─── */
@@ -566,6 +594,20 @@ export default function ScrollWizard() {
 
       {q.type === 'contact' && (
         <div className="flex flex-col gap-2 lg:gap-3 w-full">
+          {/* Honeypot против ботове: извън екрана, не в tab-реда, скрито от
+              скрийнрийдъри. НЕ display:none — част от ботовете го прескачат. */}
+          <div style={{ position: 'absolute', left: '-9999px', top: 0, width: 1, height: 1, overflow: 'hidden' }} aria-hidden="true">
+            <label htmlFor="wz-field-fax">Факс (не попълвайте)</label>
+            <input
+              id="wz-field-fax"
+              name="fax"
+              type="text"
+              value={honeypot}
+              onChange={e => setHoneypot(e.target.value)}
+              autoComplete="off"
+              tabIndex={-1}
+            />
+          </div>
           {contactFields.map(f => (
             <div key={f.id} className="text-left">
               <label htmlFor={`wz-field-${f.id}`} className="block text-[10px] lg:text-[11px] font-medium text-[#1A1A1A]/70 mb-0.5 uppercase tracking-wide">
