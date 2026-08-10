@@ -1,7 +1,7 @@
 import { Resend } from 'resend'
 import { buildInquiryEmail, buildClientConfirmation } from './email-template.js'
 import { hasDb } from './_lib/db.js'
-import { insertLead } from './_lib/leads.js'
+import { insertLead, recentLeadExists, newLeadsToday } from './_lib/leads.js'
 
 /* Запитванията се пишат и в CRM базата (таблица leads). Best-effort:
    грешка в базата НИКОГА не бива да чупи формата — само се логва. */
@@ -11,6 +11,37 @@ async function saveLead(body, meta) {
     await insertLead(body, meta)
   } catch (err) {
     console.error('[send-email] записът в CRM се провали:', err)
+  }
+}
+
+/* ── Дневен бюджет за писма ──────────────────────────────────
+   Квотата на Resend (100 писма/ден) НЕ бива да пада от бомбардировка —
+   на 10.08.2026 спам вълна я изгори двойно и формата връщаше 500 на
+   всички до полунощ. Всяко запитване = до 3 писма (екип ×2 + потвърждение),
+   затова:
+   1) повторно запитване от същия имейл в 24ч → без нови писма (burst-ът
+      на един бот се свива до едно писмо);
+   2) над EMAIL_DAILY_CAP new запитвания за UTC деня → без писма изобщо.
+   Капът по подразбиране е 30 → най-много ~90 писма/ден, под тавана 100.
+
+   И в двата случая запитването СЕ ЗАПИСВА в CRM (нищо не се губи) и
+   клиентът вижда успех — пести се само писмото. DB недостъпна → пращаме
+   (fail-open: по-добре писмо в повече, отколкото изгубено известие). */
+const EMAIL_DAILY_CAP = Number(process.env.EMAIL_DAILY_CAP || 30)
+
+async function emailBudget(email) {
+  if (!hasDb()) return { send: true }
+  try {
+    if (await recentLeadExists(email, normalizeEmail(email))) {
+      return { send: false, reason: 'повторно запитване от същия имейл в 24ч' }
+    }
+    if ((await newLeadsToday()) >= EMAIL_DAILY_CAP) {
+      return { send: false, reason: `дневният бюджет от ${EMAIL_DAILY_CAP} писма е изчерпан` }
+    }
+    return { send: true }
+  } catch (err) {
+    console.error('[send-email] проверката на бюджета се провали:', err)
+    return { send: true }
   }
 }
 
@@ -332,8 +363,20 @@ export default async function handler(req, res) {
     const spamNote = [rc.note, honeypotNote(raw), structureNote(body), fillTimeNote(raw)].filter(Boolean).join('; ') || null
     if (spamNote) console.warn('[send-email] бележки по заявката:', spamNote, '|', normalizeEmail(email))
 
+    // Бюджетът се проверява ПРЕДИ записа — dedup-ът не бива да вижда
+    // реда, който сами ще вмъкнем след миг.
+    const budget = await emailBudget(email)
+
     // В базата — преди изпращането, за да не зависи от успеха на Resend.
     await saveLead(body, { status: 'new', spamNote, ip: clientIp(req) })
+
+    /* Пестене на квотата: запитването е в CRM, но писма не тръгват.
+       Клиентът вижда успех — това не е негова грешка и не бива да го
+       пращаме към резервния канал, който също вече е в CRM. */
+    if (!budget.send) {
+      console.warn('[send-email] писмата са пропуснати:', budget.reason, '|', normalizeEmail(email))
+      return res.status(200).json({ success: true })
+    }
 
     const teamEmail = buildInquiryEmail(body, { spamNote })
 
