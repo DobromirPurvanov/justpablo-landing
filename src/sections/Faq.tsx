@@ -25,7 +25,7 @@ export default function Faq() {
     <section
       ref={ref}
       id="vaprosi"
-      className="bg-[#FAFAFA] py-20 lg:py-28 border-t border-[#1A1A1A]/[0.06]"
+      className="bg-white/55 py-20 lg:py-28 border-t border-[#1A1A1A]/[0.06]"
     >
       <div className="section-padding">
         <div className="container-max">

@@ -14,6 +14,7 @@ import LandingFooter from './sections/LandingFooter'
 import CookieConsent from './components/CookieConsent'
 import StickyPromo from './components/StickyPromo'
 import CityLocal from './sections/CityLocal'
+import { GradientBackground } from './components/ui/gradient-d02073f9'
 import type { City } from './lib/cities'
 
 // Формата е тежка (валидация, reCAPTCHA, auto-save) и е под сгъвката —
@@ -55,6 +56,13 @@ export default function App({ city }: { city?: City } = {}) {
 
   return (
     <>
+      {/* Фонът на цялата страница. Компонентът си слага position:relative
+          inline, затова fixed позиционирането е на обвивката — inline стилът
+          е по-силен от класа и подаден през className не би сработил. */}
+      <div className="fixed inset-0 -z-10 pointer-events-none" aria-hidden="true">
+        <GradientBackground />
+      </div>
+
       <div id="top" />
       <LandingNav />
       <main id="main-content">

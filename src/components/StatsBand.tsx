@@ -26,7 +26,7 @@ export default function StatsBand({ stats = defaultStats }: { stats?: Stat[] }) 
   }, [])
 
   return (
-    <section ref={ref} className="bg-white border-y border-[#1A1A1A]/[0.06]">
+    <section ref={ref} className="border-y border-[#1A1A1A]/[0.06]">
       <div className="section-padding py-14 lg:py-16">
         <div className="container-max">
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-x-6 gap-y-10">

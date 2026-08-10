@@ -44,7 +44,7 @@ export default function LandingHero({ city }: { city?: City }) {
   }, [])
 
   return (
-    <section ref={sectionRef} className="relative bg-white pt-28 lg:pt-36 pb-16 lg:pb-24 overflow-hidden min-h-[92vh] supports-[height:100svh]:min-h-[92svh] flex items-center">
+    <section ref={sectionRef} className="relative pt-28 lg:pt-36 pb-16 lg:pb-24 overflow-hidden min-h-[92vh] supports-[height:100svh]:min-h-[92svh] flex items-center">
       <div className="absolute top-[15%] right-[-8%] w-[320px] h-[320px] lg:w-[520px] lg:h-[520px] rounded-full bg-[#DC2626]/[0.04] blur-3xl pointer-events-none" />
 
       {/* Интерактивното лого — очите следват мишката */}

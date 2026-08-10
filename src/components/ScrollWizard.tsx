@@ -720,7 +720,7 @@ export default function ScrollWizard() {
   /* ─── Успех ─── */
   if (isSuccess) {
     return (
-      <div ref={rootRef} className="min-h-[80vh] supports-[height:100svh]:min-h-[80svh] flex flex-col items-center justify-center text-center bg-white section-padding py-16">
+      <div ref={rootRef} className="min-h-[80vh] supports-[height:100svh]:min-h-[80svh] flex flex-col items-center justify-center text-center section-padding py-16">
         <ConfettiBurst />
         <div className="wz-success-face w-32 lg:w-40 mb-10" aria-hidden="true">
           <LogoFace />
@@ -753,7 +753,7 @@ export default function ScrollWizard() {
   /* ─── Интро: Какъв е вашият бизнес? ─── */
   if (phase === 'intro') {
     return (
-      <div ref={rootRef} className="bg-white min-h-[85vh] supports-[height:100svh]:min-h-[85svh] flex items-center py-14 relative">
+      <div ref={rootRef} className="min-h-[85vh] supports-[height:100svh]:min-h-[85svh] flex items-center py-14 relative">
         {resume && (
           <div className="fixed top-24 left-1/2 -translate-x-1/2 z-[80] bg-[#1A1A1A] text-white pl-5 pr-3 py-3 rounded-lg shadow-xl flex items-center gap-4 text-sm max-w-[calc(100vw-32px)]" role="status">
             <span className="font-light">Имате запазен прогрес до стъпка {Math.min((resume.current ?? 0) + 1, questions.length)}.</span>
@@ -812,7 +812,7 @@ export default function ScrollWizard() {
   return (
     <div ref={rootRef}>
       {/* ─── DESKTOP: лява колона с ясни състояния + кръг с ring progress ─── */}
-      <div className="hidden lg:block bg-white min-h-[92vh] supports-[height:100svh]:min-h-[92svh] py-12 overflow-x-clip">
+      <div className="hidden lg:block min-h-[92vh] supports-[height:100svh]:min-h-[92svh] py-12 overflow-x-clip">
         <div className="section-padding">
           <div className="container-max">
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 items-center">
